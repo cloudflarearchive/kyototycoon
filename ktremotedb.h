@@ -298,7 +298,7 @@ class RemoteDB {
       RPCClient::ReturnValue rv = db_->rpc_.call("cur_get_key", &inmap, &outmap);
       if (rv != RPCClient::RVSUCCESS) {
         db_->set_rpc_error(rv, outmap);
-        return false;
+        return NULL;
       }
       size_t ksiz;
       const char* kbuf = strmapget(outmap, "key", &ksiz);
@@ -350,7 +350,7 @@ class RemoteDB {
       RPCClient::ReturnValue rv = db_->rpc_.call("cur_get_value", &inmap, &outmap);
       if (rv != RPCClient::RVSUCCESS) {
         db_->set_rpc_error(rv, outmap);
-        return false;
+        return NULL;
       }
       size_t vsiz;
       const char* vbuf = strmapget(outmap, "value", &vsiz);
@@ -411,7 +411,7 @@ class RemoteDB {
         *ksp = 0;
         *vbp = NULL;
         *vsp = 0;
-        return false;
+        return NULL;
       }
       size_t ksiz = 0;
       const char* kbuf = strmapget(outmap, "key", &ksiz);
@@ -481,7 +481,7 @@ class RemoteDB {
       RPCClient::ReturnValue rv = db_->rpc_.call("cur_seize", &inmap, &outmap);
       if (rv != RPCClient::RVSUCCESS) {
         db_->set_rpc_error(rv, outmap);
-        return false;
+        return NULL;
       }
       size_t ksiz = 0;
       const char* kbuf = strmapget(outmap, "key", &ksiz);
@@ -746,9 +746,11 @@ class RemoteDB {
    * timeout is specified.
    * @return true on success, or false on failure.
    */
-  bool open(const std::string& host = "", int32_t port = DEFPORT, double timeout = -1) {
+  bool open(const std::string& host = "", int32_t port = DEFPORT, double timeout = -1,
+            bool secure = false, const char* capath = NULL, const char* pkpath = NULL,
+            const char* certpath = NULL) {
     _assert_(true);
-    if (!rpc_.open(host, port, timeout)) {
+    if (!rpc_.open(host, port, timeout, secure, capath, pkpath, certpath)) {
       set_error(RPCClient::RVENETWORK, "connection failed");
       return false;
     }
@@ -880,7 +882,7 @@ class RemoteDB {
         int64_t fsiz = kc::atoi(it->second.c_str());
         int64_t fts = kc::atoi(tsstr.c_str());
         if (!it->first.empty() && fsiz >= 0 && fts >= 0) {
-          UpdateLogger::FileStatus fs = { it->first, fsiz, fts };
+          UpdateLogger::FileStatus fs = { it->first, (uint64_t)fsiz, (uint64_t)fts };
           fstvec->push_back(fs);
         }
       }
@@ -2326,7 +2328,8 @@ class ReplicationClient {
    * @return true on success, or false on failure.
    */
   bool open(const std::string& host = "", int32_t port = DEFPORT, double timeout = -1,
-            uint64_t ts = 0, uint16_t sid = 0, uint32_t opts = 0) {
+            uint64_t ts = 0, uint16_t sid = 0, uint32_t opts = 0, bool secure = false,
+            const char* ca = NULL, const char* pk = NULL, const char* cert = NULL) {
     _assert_(true);
     const std::string& thost = host.empty() ? Socket::get_local_host_name() : host;
     const std::string& addr = Socket::get_host_address(thost);
@@ -2334,7 +2337,7 @@ class ReplicationClient {
     std::string expr;
     kc::strprintf(&expr, "%s:%d", addr.c_str(), port);
     if (timeout > 0) sock_.set_timeout(timeout);
-    if (!sock_.open(expr)) return false;
+    if (!sock_.open(expr, secure, ca, pk, cert)) return false;
     uint32_t flags = 0;
     if (opts & WHITESID) flags |= WHITESID;
     char tbuf[1+sizeof(flags)+sizeof(ts)+sizeof(sid)];
