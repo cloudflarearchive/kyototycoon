@@ -14,6 +14,7 @@
 
 
 #include "ktsocket.h"
+#include "ktsocketsec.h"
 #include "myconf.h"
 
 #if defined(_KT_EVENT_EPOLL)
@@ -66,6 +67,9 @@ struct SocketCore {
   double timeout;                        ///< timeout
   bool aborted;                          ///< flag for abortion
   uint32_t evflags;                      ///< event flags
+#if HAVE_SEC_CHANNEL
+  SecChannel *chan;                      ///< secure channel
+#endif
   char* buf;                             ///< receiving buffer
   const char* rp;                        ///< reading pointer
   const char* ep;                        ///< end pointer
@@ -82,6 +86,9 @@ struct ServerSocketCore {
   double timeout;                        ///< timeout
   bool aborted;                          ///< flag for abortion
   uint32_t evflags;                      ///< event flags
+#if HAVE_SEC_CHANNEL
+  SecChannel *chan;                      ///< secure channel
+#endif
 };
 
 
@@ -210,6 +217,9 @@ Socket::Socket() {
   core->rp = NULL;
   core->ep = NULL;
   core->evflags = 0;
+#if HAVE_SEC_CHANNEL
+  core->chan = new SecChannel;
+#endif
   opq_ = core;
 }
 
@@ -236,11 +246,19 @@ const char* Socket::error() {
   return core->errmsg;
 }
 
+// This is a wrapper for the more complex signature for Socket::open below
+// which always sets up an INSECURE connection.  This is done for backwards
+// compatibility.
+
+bool Socket::open(const std::string& expr) {
+  return this->open(expr, false, NULL, NULL, NULL);
+}
 
 /**
  * Open a client socket.
  */
-bool Socket::open(const std::string& expr) {
+bool Socket::open(const std::string& expr, bool secure,
+                  const char* ca, const char* pk, const char* cert) {
   _assert_(true);
   SocketCore* core = (SocketCore*)opq_;
   if (core->fd > 0) {
@@ -308,9 +326,43 @@ bool Socket::open(const std::string& expr) {
     ::close(fd);
     return false;
   }
-  core->fd = fd;
   core->expr.clear();
   kc::strprintf(&core->expr, "%s:%d", addr, port);
+#if HAVE_SEC_CHANNEL
+  if (secure) {
+    if (core->chan->bind_client(fd, ca, pk, cert) != true) {
+      sockseterrmsg(core, "SSL bind failed");
+      ::close(fd);
+      return false;
+    }
+    while (true) {
+      if (core->chan->connect()) break;
+      if (core->chan->error() != SecChannel::SEWantRead &&
+          core->chan->error() != SecChannel::SEWantWrite) {
+        sockseterrmsg(core, core->chan->error_msg());
+        core->chan->close();
+        ::close(fd);
+        return false;
+      }
+      if (kc::time() > ct + core->timeout) {
+        sockseterrmsg(core, "operation timed out");
+        ::close(fd);
+        return false;
+      }
+      if (core->aborted) {
+        sockseterrmsg(core, "operation was aborted");
+        ::close(fd);
+        return false;
+      }
+      if (!waitsocket(fd, 1, WAITTIME)) {
+        sockseterrmsg(core, "waitsocket failed");
+        ::close(fd);
+        return false;
+      }
+    }
+  }
+#endif
+  core->fd = fd;
   return true;
 }
 
@@ -363,6 +415,12 @@ bool Socket::close(bool grace) {
   core->rp = NULL;
   core->ep = NULL;
   core->aborted = false;
+#if HAVE_SEC_CHANNEL
+  if (core->chan->secstate() != SecChannel::SSUNSET) {
+    core->chan->close();
+  }
+  delete core->chan;
+#endif
   return !err;
 }
 
@@ -380,7 +438,14 @@ bool Socket::send(const void* buf, size_t size) {
   const char* rp = (const char*)buf;
   double ct = kc::time();
   while (size > 0) {
-    int32_t wb = ::send(core->fd, rp, size, 0);
+    int32_t wb;
+#if HAVE_SEC_CHANNEL
+    if (core->chan->secstate() == SecChannel::SSESTABLISHED) {
+      wb = core->chan->send(rp, size);
+    }
+    else
+#endif
+      wb = ::send(core->fd, rp, size, 0);
     switch (wb) {
       case -1: {
         if (!checkerrnoretriable(errno)) {
@@ -679,6 +744,9 @@ ServerSocket::ServerSocket() {
   core->timeout = kc::UINT32MAX;
   core->aborted = false;
   core->evflags = 0;
+#if HAVE_SEC_CHANNEL
+  core->chan = NULL;
+#endif
   opq_ = core;
 }
 
@@ -761,6 +829,9 @@ bool ServerSocket::open(const std::string& expr) {
     return false;
   }
   core->fd = fd;
+#if HAVE_SEC_CHANNEL
+  core->chan = new SecChannel;
+#endif
   core->expr.clear();
   kc::strprintf(&core->expr, "%s:%d", addr, port);
   core->aborted = false;
@@ -785,14 +856,22 @@ bool ServerSocket::close() {
   }
   core->fd = -1;
   core->aborted = false;
+#if HAVE_SEC_CHANNEL
+  if (core->chan != NULL) {
+    if (core->chan->secstate() != SecChannel::SSUNSET) {
+      core->chan->close();
+    }
+    delete core->chan;
+  }
+#endif
   return !err;
 }
-
 
 /**
  * Accept a connection from a client.
  */
-bool ServerSocket::accept(Socket* sock) {
+bool ServerSocket::accept(Socket* sock, bool secure,
+                          const char* ca, const char* pk, const char* cert) {
   _assert_(sock);
   ServerSocketCore* core = (ServerSocketCore*)opq_;
   if (core->fd < 1) {
@@ -805,12 +884,13 @@ bool ServerSocket::accept(Socket* sock) {
     return false;
   }
   double ct = kc::time();
+  int32_t fd;
   while (true) {
     struct sockaddr_in sain;
     std::memset(&sain, 0, sizeof(sain));
     sain.sin_family = AF_INET;
     ::socklen_t slen = sizeof(sain);
-    int32_t fd = ::accept(core->fd, (struct sockaddr*)&sain, &slen);
+    fd = ::accept(core->fd, (struct sockaddr*)&sain, &slen);
     if (fd >= 0) {
       if (!setsocketoptions(fd)) {
         servseterrmsg(core, "setsocketoptions failed");
@@ -821,31 +901,67 @@ bool ServerSocket::accept(Socket* sock) {
       if (::getnameinfo((struct sockaddr*)&sain, sizeof(sain), addr, sizeof(addr),
                         NULL, 0, NI_NUMERICHOST) != 0) std::sprintf(addr, "0.0.0.0");
       int32_t port = ntohs(sain.sin_port);
-      sockcore->fd = fd;
       sockcore->expr.clear();
       kc::strprintf(&sockcore->expr, "%s:%d", addr, port);
       sockcore->aborted = false;
-      return true;
+      break;
     } else {
       if (!checkerrnoretriable(errno)) {
         servseterrmsg(core, "accept failed");
-        break;
+        return false;
       }
       if (kc::time() > ct + core->timeout) {
         servseterrmsg(core, "operation timed out");
-        break;
+        return false;
       }
       if (core->aborted) {
         servseterrmsg(core, "operation was aborted");
-        break;
+        return false;
       }
       if (!waitsocket(core->fd, 1, WAITTIME)) {
         servseterrmsg(core, "waitsocket failed");
-        break;
+        return false;
       }
     }
   }
-  return false;
+#if HAVE_SEC_CHANNEL
+  if (secure) {
+    if (core->chan->bind_server(fd, ca, pk, cert) != true) {
+      servseterrmsg(core, core->chan->error_msg());
+      ::close(fd);
+      return false;
+    }
+    while (true) {
+      if (core->chan->accept()) break;
+      if (core->chan->error() != SecChannel::SEWantRead &&
+          core->chan->error() != SecChannel::SEWantWrite) {
+        servseterrmsg(core, core->chan->error_msg());
+        core->chan->close();
+        ::close(fd);
+        return false;
+      }
+      if (kc::time() > ct + core->timeout) {
+        servseterrmsg(core, "operation timed out");
+        ::close(fd);
+        return false;
+      }
+      if (core->aborted) {
+        servseterrmsg(core, "operation was aborted");
+        ::close(fd);
+        return false;
+      }
+      if (!waitsocket(fd, 0, WAITTIME)) {
+        servseterrmsg(core, "waitsocket failed");
+        ::close(fd);
+        return false;
+      }
+    }
+    sockcore->chan = core->chan;
+    core->chan = new SecChannel;
+  }
+#endif // HAVE_SEC_CHANNEL
+  sockcore->fd = fd;
+  return true;
 }
 
 
@@ -1900,7 +2016,14 @@ static int32_t sockgetc(SocketCore* core) {
   }
   double ct = kc::time();
   while (true) {
-    int32_t rv = ::recv(core->fd, core->buf, IOBUFSIZ, 0);
+    int32_t rv;
+#if HAVE_SEC_CHANNEL
+    if (core->chan->secstate() == SecChannel::SSESTABLISHED) {
+      rv = core->chan->receive(core->buf, IOBUFSIZ);
+    }
+    else
+#endif // HAVE_SEC_CHANNEL
+      rv = ::recv(core->fd, core->buf, IOBUFSIZ, 0);
     if (rv > 0) {
       core->rp = core->buf + 1;
       core->ep = core->buf + rv;

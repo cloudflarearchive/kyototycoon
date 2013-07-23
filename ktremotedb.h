@@ -744,13 +744,17 @@ class RemoteDB {
    * @param port the port numger of the server.
    * @param timeout the timeout of each operation in seconds.  If it is not more than 0, no
    * timeout is specified.
+   * @param bool secure if this is to be a secure socket
+   * @param char* ca path of the ca
+   * @param char* pk path of the private key
+   * @param char* cert path of the certificate
    * @return true on success, or false on failure.
    */
   bool open(const std::string& host = "", int32_t port = DEFPORT, double timeout = -1,
-            bool secure = false, const char* capath = NULL, const char* pkpath = NULL,
-            const char* certpath = NULL) {
+            bool secure = false, const char* ca = NULL, const char* pk = NULL,
+            const char* cert = NULL) {
     _assert_(true);
-    if (!rpc_.open(host, port, timeout, secure, capath, pkpath, certpath)) {
+    if (!rpc_.open(host, port, timeout, secure, ca, pk, cert)) {
       set_error(RPCClient::RVENETWORK, "connection failed");
       return false;
     }
@@ -2325,11 +2329,14 @@ class ReplicationClient {
    * @param sid the server ID number.
    * @param opts the optional features by bitwise-or: ReplicationClient::WHITESID to fetch
    * messages whose server ID number is the specified one only.
+   * @param bool secure if this is to be a secure socket
+   * @param char* ca path of the ca
+   * @param char* pk path of the private key
+   * @param char* cert path of the certificate
    * @return true on success, or false on failure.
    */
   bool open(const std::string& host = "", int32_t port = DEFPORT, double timeout = -1,
-            uint64_t ts = 0, uint16_t sid = 0, uint32_t opts = 0, bool secure = false,
-            const char* ca = NULL, const char* pk = NULL, const char* cert = NULL) {
+            uint64_t ts = 0, uint16_t sid = 0, uint32_t opts = 0) {
     _assert_(true);
     const std::string& thost = host.empty() ? Socket::get_local_host_name() : host;
     const std::string& addr = Socket::get_host_address(thost);
@@ -2337,7 +2344,7 @@ class ReplicationClient {
     std::string expr;
     kc::strprintf(&expr, "%s:%d", addr.c_str(), port);
     if (timeout > 0) sock_.set_timeout(timeout);
-    if (!sock_.open(expr, secure, ca, pk, cert)) return false;
+    if (!sock_.open(expr)) return false;
     uint32_t flags = 0;
     if (opts & WHITESID) flags |= WHITESID;
     char tbuf[1+sizeof(flags)+sizeof(ts)+sizeof(sid)];

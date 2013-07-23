@@ -29,11 +29,11 @@ MYPCFILES="kyototycoon.pc"
 
 # Building flags
 MYCFLAGS="-Wall -ansi -pedantic -fPIC -fsigned-char -O2"
-MYCXXFLAGS="-Wall -fPIC -fsigned-char -O2"
-MYCPPFLAGS="-I. -I\$(INCLUDEDIR) -I/usr/local/include"
+MYCXXFLAGS="-Wall -fPIC -fsigned-char -g0 -O2"
+MYCPPFLAGS="-I. -Idep/openssl/include -I\$(INCLUDEDIR) -I/usr/local/include"
 MYCPPFLAGS="$MYCPPFLAGS -DNDEBUG -D_GNU_SOURCE=1"
 MYCPPFLAGS="$MYCPPFLAGS -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D__EXTENSIONS__"
-MYLDFLAGS="-L. -L\$(LIBDIR) -L/usr/local/lib"
+MYLDFLAGS="-L. -Ldef/openssl/lib -L\$(LIBDIR) -L/usr/local/lib"
 MYCMDLDFLAGS=""
 MYCMDLIBS=""
 MYLDLIBPATH=""
@@ -157,6 +157,18 @@ then
   enables="$enables (lua)"
 fi
 
+#enable the secure path through openssl
+AC_ARG_ENABLE(sec_openssl,
+  AC_HELP_STRING([--enable-sec-openssl], [build with Secure communication extension]))
+if test "$enable_sec_openssl" = "yes"
+then
+  MYHEADERFILES="$MYHEADERFILES ktsocketsec.h"
+  MYLIBOBJFILES="$MYLIBOBJFILES ktsocketopenssl.o"
+  MYCPPFLAGS="$MYCPPFLAGS -DHAVE_SEC_CHANNEL=1 -Idep/openssl/include"
+  MYLDFLAGS="$MYLDFLAGS -Ldep/openssl"
+  enables="$enables (sec_openssl)"
+fi
+
 # Specify the installation path of Kyoto Cabinet
 AC_ARG_WITH(kc,
   AC_HELP_STRING([--with-kc=DIR], [search DIR/include and DIR/lib for Kyoto Cabinet]))
@@ -265,6 +277,13 @@ then
   AC_CHECK_LIB(lua, main, MYCMDLIBS="$MYCMDLIBS -llua")
   AC_CHECK_LIB(lua$luaver, main, MYCMDLIBS="$MYCMDLIBS -llua$luaver")
 fi
+if test "$enable_sec_openssl" = "yes"
+then
+  AC_CHECK_LIB(crypto, main)
+  AC_CHECK_LIB(crypto, main, MYCMDLIBS="$MYCMDLIBS -lcrypto", AC_MSG_ERROR([crypto is required]))
+  AC_CHECK_LIB(ssl, main)
+  AC_CHECK_LIB(ssl, main, MYCMDLIBS="$MYCMDLIBS -lssl", AC_MSG_ERROR([ssl is required]))
+fi
 AC_CHECK_LIB(kyototycoon, main, AC_MSG_WARN([old version of Kyoto Tycoon was detected]))
 MYLDLIBPATH="$LD_LIBRARY_PATH"
 
@@ -278,6 +297,14 @@ if test "$enable_lua" = "yes"
 then
   AC_CHECK_HEADER(lua.h, true, AC_MSG_ERROR([lua.h is required]))
 fi
+if test "$enable_sec_openssl" = "yes"
+then
+  AC_CHECK_HEADER(openssl/ssl.h, true, AC_MSG_ERROR([openssl/ssl.h is required]))
+  AC_CHECK_HEADER(openssl/err.h, true, AC_MSG_ERROR([openssl/err.h is required]))
+  AC_CHECK_HEADER(openssl/conf.h, true, AC_MSG_ERROR([openssl/conf.h is required]))
+  AC_CHECK_HEADER(openssl/engine.h, true, AC_MSG_ERROR([openssl/engine.h is required]))
+fi
+
 
 # Static linking
 if test "$is_static" = "yes"

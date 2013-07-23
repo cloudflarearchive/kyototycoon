@@ -75,7 +75,7 @@ void printdb(kc::BasicDB* db, bool px = false);
 // checker to show progress by printing dots
 class DotChecker : public kc::BasicDB::ProgressChecker {
  public:
-  explicit DotChecker(std::ostream* strm, int64_t freq) : strm_(strm), freq_(freq), cnt_(0) {}
+  explicit DotChecker(std::ostream* strm, int64_t freq) : freq_(freq), cnt_(0) {}
   int64_t count() {
     return cnt_;
   }
@@ -99,7 +99,6 @@ class DotChecker : public kc::BasicDB::ProgressChecker {
     }
     return true;
   }
-  std::ostream* strm_;
   int64_t freq_;
   int64_t cnt_;
 };

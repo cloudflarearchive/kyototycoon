@@ -9,7 +9,7 @@ The command `\fBktserver\fR' runs the server managing database instances.  This 
 .PP
 .RS
 .br
-\fBktserver \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-th \fInum\fB\fR]\fB \fR[\fB\-log \fIfile\fB\fR]\fB \fR[\fB\-li\fR|\fB\-ls\fR|\fB\-le\fR|\fB\-lz\fR]\fB \fR[\fB\-ulog \fIdir\fB\fR]\fB \fR[\fB\-ulim \fInum\fB\fR]\fB \fR[\fB\-uasi \fInum\fB\fR]\fB \fR[\fB\-sid \fInum\fB\fR]\fB \fR[\fB\-ord\fR]\fB \fR[\fB\-oat\fR|\fB\-oas\fR|\fB\-onl\fR|\fB\-otl\fR|\fB\-onr\fR]\fB \fR[\fB\-asi \fInum\fB\fR]\fB \fR[\fB\-ash\fR]\fB \fR[\fB\-bgs \fIdir\fB\fR]\fB \fR[\fB\-bgsi \fInum\fB\fR]\fB \fR[\fB\-bgc \fIstr\fB\fR]\fB \fR[\fB\-dmn\fR]\fB \fR[\fB\-pid \fIfile\fB\fR]\fB \fR[\fB\-scr \fIfile\fB\fR]\fB \fR[\fB\-mhost \fIstr\fB\fR]\fB \fR[\fB\-mport \fInum\fB\fR]\fB \fR[\fB\-rts \fIfile\fB\fR]\fB \fR[\fB\-riv \fInum\fB\fR]\fB \fR[\fB\-plsv \fIfile\fB\fR]\fB \fR[\fB\-plex \fIstr\fB\fR]\fB \fR[\fB\-pldb \fIfile\fB\fR]\fB \fR[\fB\fIdb\fB...\fR]\fB\fR
+\fBktserver \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-auxhost \fIstr\fB\fR]\fB \fR[\fB\-auxport \fInum\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-msec\fR]\fB \fR[\fB\-capath \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fR[\fB\-rpk \fIfile\fB\fR]\fB \fR[\fB\-rcert \fIfile\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-th \fInum\fB\fR]\fB \fR[\fB\-log \fIfile\fB\fR]\fB \fR[\fB\-li\fR|\fB\-ls\fR|\fB\-le\fR|\fB\-lz\fR]\fB \fR[\fB\-ulog \fIdir\fB\fR]\fB \fR[\fB\-ulim \fInum\fB\fR]\fB \fR[\fB\-uasi \fInum\fB\fR]\fB \fR[\fB\-sid \fInum\fB\fR]\fB \fR[\fB\-ord\fR]\fB \fR[\fB\-oat\fR|\fB\-oas\fR|\fB\-onl\fR|\fB\-otl\fR|\fB\-onr\fR]\fB \fR[\fB\-asi \fInum\fB\fR]\fB \fR[\fB\-ash\fR]\fB \fR[\fB\-bgs \fIdir\fB\fR]\fB \fR[\fB\-bgsi \fInum\fB\fR]\fB \fR[\fB\-bgc \fIstr\fB\fR]\fB \fR[\fB\-dmn\fR]\fB \fR[\fB\-pid \fIfile\fB\fR]\fB \fR[\fB\-scr \fIfile\fB\fR]\fB \fR[\fB\-mhost \fIstr\fB\fR]\fB \fR[\fB\-mport \fInum\fB\fR]\fB \fR[\fB\-rts \fIfile\fB\fR]\fB \fR[\fB\-riv \fInum\fB\fR]\fB \fR[\fB\-plsv \fIfile\fB\fR]\fB \fR[\fB\-plex \fIstr\fB\fR]\fB \fR[\fB\-pldb \fIfile\fB\fR]\fB \fR[\fB\fIdb\fB...\fR]\fB\fR
 .RE
 .PP
 Options feature the following.
@@ -18,6 +18,24 @@ Options feature the following.
 \fB\-host \fIstr\fR\fR : specifies the host name of the server.
 .br
 \fB\-port \fInum\fR\fR : specifies the port number of the server.
+.br
+\fB\-auxhost \fInum\fR\fR : specifies the optional secondary host name of the server (if auxport is present it defaults to the value of host).
+.br
+\fB\-auxport \fInum\fR\fR : specifies the optional secondary port number of the server.
+.br
+\fB\-sec\fR : specifies that the server connection will use a secure channel.
+.br
+\fB\-msec\fR : specifies that the master server of replication will use a secure channel.
+.br
+\fB\-capath \fIfile\fR\fR : specifies the file to contain the certificate authorities for the server to trust (PEM format).
+.br
+\fB\-pk \fIfile\fR\fR : specifies the file to contain the private key for the server (PEM format).
+.br
+\fB\-cert \fIfile\fR\fR : specifies the file to contain the certificate for the server (PEM format).
+.br
+\fB\-rpk \fIfile\fR\fR : specifies the file to contain the private key for the master server of replication (PEM format).
+.br
+\fB\-rcert \fIfile\fR\fR : specifies the file to contain the certificate for master server of replication (PEM format).
 .br
 \fB\-tout \fInum\fR\fR : specifies the timeout in seconds.
 .br

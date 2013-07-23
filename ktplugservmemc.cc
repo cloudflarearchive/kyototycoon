@@ -108,7 +108,7 @@ class MemcacheServer : public kt::PluggableServer {
     serv_.set_network(nexpr, tout_);
     worker_ = new Worker(this, thnum_);
     serv_.set_worker(worker_, thnum_);
-    return serv_.start();
+    return serv_.start_listening();
   }
   // stop the server
   bool stop() {

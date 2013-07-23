@@ -9,82 +9,82 @@ The command `\fBktremotedmgr\fR' is a utility for test and debugging of the remo
 .PP
 .RS
 .br
-\fBktremotemgr report \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB\fR
+\fBktremotemgr report \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB\fR
 .RS
 Prints statistics of the server.
 .RE
 .br
-\fBktremotemgr script \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-bin\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fIproc\fB \fR[\fB\fIparams\fB...\fR]\fB\fR
+\fBktremotemgr script \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-bin\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fIproc\fB \fR[\fB\fIparams\fB...\fR]\fB\fR
 .RS
 Calls a procedure of the scripting extension.
 .RE
 .br
-\fBktremotemgr tunerepl \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-mport \fIstr\fB\fR]\fB \fR[\fB\-ts \fInum\fB\fR]\fB \fR[\fB\-iv \fInum\fB\fR]\fB \fR[\fB\fImhost\fB\fR]\fB\fR
+\fBktremotemgr tunerepl \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-mport \fIstr\fB\fR]\fB \fR[\fB\-ts \fInum\fB\fR]\fB \fR[\fB\-iv \fInum\fB\fR]\fB \fR[\fB\fImhost\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB\fR
 .RS
 Sets the replication configuration.
 .RE
 .br
-\fBktremotemgr inform \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-st\fR]\fB\fR
+\fBktremotemgr inform \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-st\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB\fR
 .RS
 Prints status information of a database.
 .RE
 .br
-\fBktremotemgr clear \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB\fR
+\fBktremotemgr clear \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB\fR
 .RS
 Removes all records of a database.
 .RE
 .br
-\fBktremotemgr sync \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-hard\fR]\fB \fR[\fB\-cmd \fIstr\fB\fR]\fB\fR
+\fBktremotemgr sync \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-hard\fR]\fB \fR[\fB\-cmd \fIstr\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB\fR
 .RS
 Synchronizes updated contents with the file and the device.
 .RE
 .br
-\fBktremotemgr set \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-add\fR|\fB\-rep\fR|\fB\-app\fR|\fB\-inci\fR|\fB\-incd\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-xt \fInum\fB\fR]\fB \fIkey\fB \fIvalue\fB\fR
+\fBktremotemgr set \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-add\fR|\fB\-rep\fR|\fB\-app\fR|\fB\-inci\fR|\fB\-incd\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-xt \fInum\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fIkey\fB \fIvalue\fB\fR
 .RS
 Stores a record.
 .RE
 .br
-\fBktremotemgr remove \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sx\fR]\fB \fIkey\fB\fR
+\fBktremotemgr remove \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fIkey\fB\fR
 .RS
 Removes a record.
 .RE
 .br
-\fBktremotemgr get \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-rm\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-pt\fR]\fB \fR[\fB\-pz\fR]\fB \fIkey\fB\fR
+\fBktremotemgr get \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-rm\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-pt\fR]\fB \fR[\fB\-pz\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fIkey\fB\fR
 .RS
 Prints the value of a record.
 .RE
 .br
-\fBktremotemgr list \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-des\fR]\fB \fR[\fB\-max \fInum\fB\fR]\fB \fR[\fB\-rm\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-pv\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-pt\fR]\fB \fR[\fB\fIkey\fB\fR]\fB\fR
+\fBktremotemgr list \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-des\fR]\fB \fR[\fB\-max \fInum\fB\fR]\fB \fR[\fB\-rm\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-pv\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-pt\fR]\fB \fR[\fB\fIkey\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB\fR
 .RS
 Prints keys of all records, separated by line feeds.
 .RE
 .br
-\fBktremotemgr import \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-xt \fInum\fB\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+\fBktremotemgr import \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-xt \fInum\fB\fR]\fB \fR[\fB\fIfile\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB\fR
 .RS
 Imports records from a TSV file.
 .RE
 .br
-\fBktremotemgr vacuum \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-step \fInum\fB\fR]\fB \fIpath\fB\fR
+\fBktremotemgr vacuum \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-step \fInum\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fIpath\fB\fR
 .RS
 Eliminates regions of expired records.
 .RE
 .br
-\fBktremotemgr slave \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-ts \fInum\fB\fR]\fB \fR[\fB\-sid \fInum\fB\fR]\fB \fR[\fB\-ux\fR]\fB \fR[\fB\-uw\fR]\fB \fR[\fB\-uf\fR]\fB \fR[\fB\-ur\fR]\fB\fR
+\fBktremotemgr slave \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-ts \fInum\fB\fR]\fB \fR[\fB\-sid \fInum\fB\fR]\fB \fR[\fB\-ux\fR]\fB \fR[\fB\-uw\fR]\fB \fR[\fB\-uf\fR]\fB \fR[\fB\-ur\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB\fR
 .RS
 Simulates a client of replication and prints update logs.
 .RE
 .br
-\fBktremotemgr setbulk \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-bin\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-xt \fInum\fB\fR]\fB \fIkey\fB \fIvalue\fB ...\fR
+\fBktremotemgr setbulk \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-bin\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-xt \fInum\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fIkey\fB \fIvalue\fB ...\fR
 .RS
 Store records at once.
 .RE
 .br
-\fBktremotemgr removebulk \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-bin\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sx\fR]\fB \fIkey\fB ...\fR
+\fBktremotemgr removebulk \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-bin\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fIkey\fB ...\fR
 .RS
 Remove records at once.
 .RE
 .br
-\fBktremotemgr getbulk \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-bin\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-px\fR]\fB \fIkey\fB ...\fR
+\fBktremotemgr getbulk \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-bin\fR]\fB \fR[\fB\-swname \fIstr\fB\fR]\fB \fR[\fB\-swtime \fInum\fB\fR]\fB \fR[\fB\-ssname \fIstr\fB\fR]\fB \fR[\fB\-ssbrd\fR]\fB \fR[\fB\-db \fIstr\fB\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fIkey\fB ...\fR
 .RS
 Retrieve records at once.
 .RE
@@ -96,6 +96,14 @@ Options feature the following.
 \fB\-host \fIstr\fR\fR : specifies the host name of the server.
 .br
 \fB\-port \fInum\fR\fR : specifies the port number of the server.
+.br
+\fB\-sec\fR : specifies that the server connection will use a secure channel.
+.br
+\fB\-ca \fIfile\fR\fR : specifies the file to contain the certificate authorities for the server to trust (PEM format).
+.br
+\fB\-pk \fIfile\fR\fR : specifies the file to contain the private key for the server (PEM format).
+.br
+\fB\-cert \fIfile\fR\fR : specifies the file to contain the certificate for the server (PEM format).
 .br
 \fB\-tout \fInum\fR\fR : specifies the timeout in seconds.
 .br

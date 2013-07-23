@@ -26,7 +26,7 @@ namespace kyototycoon {                  // common namespace
 /**
  * Threaded TCP Server.
  */
-class ThreadedServer {
+class ThreadedServer : public kc::Thread {
  public:
   class Logger;
   class Worker;
@@ -192,7 +192,8 @@ class ThreadedServer {
    * Default constructor.
    */
   explicit ThreadedServer() :
-      run_(false), expr_(), timeout_(0), logger_(NULL), logkinds_(0), worker_(NULL), thnum_(0),
+      run_(false), secure_(false), ca_(NULL), pk_(NULL), cert_(NULL),
+      expr_(), timeout_(0), logger_(NULL), logkinds_(0), worker_(NULL), thnum_(0),
       sock_(), poll_(), queue_(this), sesscnt_(0), idlesem_(0), timersem_(0) {
     _assert_(true);
   }
@@ -206,10 +207,19 @@ class ThreadedServer {
    * Set the network configurations.
    * @param expr an expression of the address and the port of the server.
    * @param timeout the timeout of each network operation in seconds.  If it is not more than 0,
+   * @param bool secure if this is to be a secure socket
+   * @param char* ca path of the ca
+   * @param char* pk path of the private key
+   * @param char* cert path of the certificate
    * no timeout is specified.
    */
-  void set_network(const std::string& expr, double timeout = -1) {
+  void set_network(const std::string& expr, double timeout = -1, bool secure = false,
+                   const char* ca = NULL, const char* pk = NULL, const char* cert = NULL) {
     expr_ = expr;
+    secure_ = secure;
+    ca_ = ca;
+    pk_ = pk;
+    cert_ = cert;
     timeout_ = timeout;
   }
   /**
@@ -234,15 +244,23 @@ class ThreadedServer {
     worker_ = worker;
     thnum_ = thnum;
   }
+
+ /**
+  * Run command for threaded model
+  */
+  void run() {
+    (void)start_listening();
+  }
+
   /**
    * Start the service.
    * @return true on success, or false on failure.
    * @note This function blocks until the server stops by the ThreadedServer::stop method.
    */
-  bool start() {
+  bool start_listening() {
     log(Logger::SYSTEM, "starting the server: expr=%s", expr_.c_str());
     if (run_) {
-      log(Logger::ERROR, "alreadiy running");
+      log(Logger::ERROR, "already running");
       return false;
     }
     if (expr_.empty()) {
@@ -281,7 +299,7 @@ class ThreadedServer {
           if (event == &sock_) {
             Session* sess = new Session(++sesscnt_);
             if (timeout_ > 0) sess->set_timeout(timeout_);
-            if (sock_.accept(sess)) {
+            if (sock_.accept(sess, secure_, ca_, pk_, cert_)) {
               log(Logger::INFO, "connected: expr=%s", sess->expression().c_str());
               sess->set_event_flags(Pollable::EVINPUT);
               if (!poll_.deposit(sess)) {
@@ -527,6 +545,14 @@ class ThreadedServer {
   ThreadedServer& operator =(const ThreadedServer&);
   /** The flag of running. */
   bool run_;
+  /** The flag indicating a secure server. */
+  bool secure_;
+  /** The path to the certificate authority file */
+  const char* ca_;
+  /** The path to the private key */
+  const char* pk_;
+  /** The path to the certificate */
+  const char* cert_;
   /** The expression of the server socket. */
   std::string expr_;
   /** The timeout of each network operation. */

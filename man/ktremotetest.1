@@ -9,22 +9,22 @@ The command `\fBktremotetest\fR' is a utility for facility test and performance 
 .PP
 .RS
 .br
-\fBktremotetest order \fR[\fB\-th \fInum\fB\fR]\fB \fR[\fB\-rnd\fR]\fB \fR[\fB\-set\fR|\fB\-get\fR|\fB\-rem\fR|\fB\-etc\fR]\fB \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fIrnum\fB\fR
+\fBktremotetest order \fR[\fB\-th \fInum\fB\fR]\fB \fR[\fB\-rnd\fR]\fB \fR[\fB\-set\fR|\fB\-get\fR|\fB\-rem\fR|\fB\-etc\fR]\fB \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fIrnum\fB\fR
 .RS
 Performs in\-order tests.
 .RE
 .br
-\fBktremotetest bulk \fR[\fB\-th \fInum\fB\fR]\fB \fR[\fB\-bin\fR]\fB \fR[\fB\-rnd\fR]\fB \fR[\fB\-set\fR|\fB\-get\fR|\fB\-rem\fR|\fB\-etc\fR]\fB \fR[\fB\-bulk \fInum\fB\fR]\fB \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-bnr\fR]\fB \fIrnum\fB\fR
+\fBktremotetest bulk \fR[\fB\-th \fInum\fB\fR]\fB \fR[\fB\-bin\fR]\fB \fR[\fB\-rnd\fR]\fB \fR[\fB\-set\fR|\fB\-get\fR|\fB\-rem\fR|\fB\-etc\fR]\fB \fR[\fB\-bulk \fInum\fB\fR]\fB \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-bnr\fR]\fB \fIrnum\fB\fR
 .RS
 Performs bulk operation tests.
 .RE
 .br
-\fBktremotetest wicked \fR[\fB\-th \fInum\fB\fR]\fB \fR[\fB\-it \fInum\fB\fR]\fB \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fIrnum\fB\fR
+\fBktremotetest wicked \fR[\fB\-th \fInum\fB\fR]\fB \fR[\fB\-it \fInum\fB\fR]\fB \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fIrnum\fB\fR
 .RS
 Performs mixed operations selected at random.
 .RE
 .br
-\fBktremotetest usual \fR[\fB\-th \fInum\fB\fR]\fB \fR[\fB\-it \fInum\fB\fR]\fB \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-kp \fInum\fB\fR]\fB \fR[\fB\-vs \fInum\fB\fR]\fB \fR[\fB\-xt \fInum\fB\fR]\fB \fR[\fB\-iv \fInum\fB\fR]\fB \fIrnum\fB\fR
+\fBktremotetest usual \fR[\fB\-th \fInum\fB\fR]\fB \fR[\fB\-it \fInum\fB\fR]\fB \fR[\fB\-host \fIstr\fB\fR]\fB \fR[\fB\-port \fInum\fB\fR]\fB \fR[\fB\-sec\fR]\fB \fR[\fB\-ca \fIfile\fB\fR]\fB \fR[\fB\-pk \fIfile\fB\fR]\fB \fR[\fB\-cert \fIfile\fB\fR]\fB \fR[\fB\-tout \fInum\fB\fR]\fB \fR[\fB\-kp \fInum\fB\fR]\fB \fR[\fB\-vs \fInum\fB\fR]\fB \fR[\fB\-xt \fInum\fB\fR]\fB \fR[\fB\-iv \fInum\fB\fR]\fB \fIrnum\fB\fR
 .RS
 Performs mixed operations to simulate usual use cases.
 .RE
@@ -48,6 +48,14 @@ Options feature the following.
 \fB\-host \fIstr\fR\fR : specifies the host name of the server.
 .br
 \fB\-port \fInum\fR\fR : specifies the port number of the server.
+.br
+\fB\-sec\fR : specifies that the server connection will use a secure channel.
+.br
+\fB\-ca \fIfile\fR\fR : specifies the file to contain the certificate authorities for the server to trust (PEM format).
+.br
+\fB\-pk \fIfile\fR\fR : specifies the file to contain the private key for the server (PEM format).
+.br
+\fB\-cert \fIfile\fR\fR : specifies the file to contain the certificate for the server (PEM format).
 .br
 \fB\-tout \fInum\fR\fR : specifies the timeout in seconds.
 .br

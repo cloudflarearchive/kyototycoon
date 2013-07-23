@@ -394,9 +394,14 @@ class HTTPClient {
    * @param port the port numger of the server.
    * @param timeout the timeout of each operation in seconds.  If it is not more than 0, no
    * timeout is specified.
+   * @param bool secure if this is to be a secure socket
+   * @param char* ca path of the ca
+   * @param char* pk path of the private key
+   * @param char* cert path of the certificate
    * @return true on success, or false on failure.
    */
-  bool open(const std::string& host = "", int32_t port = 80, double timeout = -1) {
+  bool open(const std::string& host = "", int32_t port = 80, double timeout = -1,
+            bool secure = false, const char* ca = NULL, const char* pk = NULL, const char* cert = NULL) {
     _assert_(true);
     const std::string& thost = host.empty() ? Socket::get_local_host_name() : host;
     const std::string& addr = Socket::get_host_address(thost);
@@ -404,7 +409,7 @@ class HTTPClient {
     std::string expr;
     kc::strprintf(&expr, "%s:%d", addr.c_str(), port);
     if (timeout > 0) sock_.set_timeout(timeout);
-    if (!sock_.open(expr)) return false;
+    if (!sock_.open(expr, secure, ca, pk, cert)) return false;
     host_ = host;
     port_ = port;
     return true;
@@ -847,7 +852,7 @@ class HTTPServer {
   /**
    * Default constructor.
    */
-  explicit HTTPServer() : serv_(), name_(), worker_() {
+  explicit HTTPServer() : threaded_(false), serv_(), name_(), worker_() {
     _assert_(true);
   }
   /**
@@ -861,11 +866,16 @@ class HTTPServer {
    * @param expr an expression of the address and the port of the server.
    * @param timeout the timeout of each network operation in seconds.  If it is not more than 0,
    * no timeout is specified.
+   * @param bool secure if this is to be a secure socket
+   * @param char* ca path of the ca
+   * @param char* pk path of the private key
+   * @param char* cert path of the certificate
    * @param name the name of the server.  If it is an empty string, the host name is specified.
    */
-  void set_network(const std::string& expr, double timeout = -1, const std::string& name = "") {
+  void set_network(const std::string& expr, double timeout = -1, const std::string& name = "", bool secure = false,
+                   const char* ca = NULL, const char* pk = NULL, const char* cert = NULL) {
     _assert_(true);
-    if (timeout > 0) serv_.set_network(expr, timeout);
+    if (timeout > 0) serv_.set_network(expr, timeout, secure, ca, pk, cert);
     if (name.empty()) {
       name_ = Socket::get_local_host_name();
       if (name.empty()) name_ = "localhost";
@@ -904,12 +914,20 @@ class HTTPServer {
   }
   /**
    * Start the service.
+   * @param threaded whether to start a threaded server.
    * @return true on success, or false on failure.
    * @note This function blocks until the server stops by the HTTPServer::stop method.
    */
-  bool start() {
+  bool start(bool threaded = false) {
     _assert_(true);
-    return serv_.start();
+    threaded_ = threaded;
+    if (threaded_) {
+      serv_.start();
+    }
+    else {
+      serv_.start_listening();
+    }
+    return true;
   }
   /**
    * Stop the service.
@@ -925,7 +943,11 @@ class HTTPServer {
    */
   bool finish() {
     _assert_(true);
-    return serv_.finish();
+    bool ret = serv_.finish();
+    if (threaded_) {
+      serv_.join();
+    }
+    return ret;
   }
   /**
    * Log a message.
@@ -1352,6 +1374,8 @@ class HTTPServer {
   HTTPServer(const HTTPServer&);
   /** Dummy Operator to forbid the use. */
   HTTPServer& operator =(const HTTPServer&);
+  /** Is the internal server on a secondary thread? */
+  bool threaded_;
   /** The internal server. */
   ThreadedServer serv_;
   /** The server name. */

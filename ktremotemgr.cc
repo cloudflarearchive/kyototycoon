@@ -41,58 +41,74 @@ static int32_t runslave(int argc, char** argv);
 static int32_t runsetbulk(int argc, char** argv);
 static int32_t runremovebulk(int argc, char** argv);
 static int32_t rungetbulk(int argc, char** argv);
-static int32_t procreport(const char* host, int32_t port, double tout);
+static int32_t procreport(const char* host, int32_t port, double tout, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath);
 static int32_t procscript(const char* proc, const char* host, int32_t port, double tout,
                           bool bin, const char* swname, double swtime,
                           const char* ssname, bool ssbrd,
-                          const std::map<std::string, std::string>& params);
+                          const std::map<std::string, std::string>& params, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath);
 static int32_t proctunerepl(const char* mhost, const char* host, int32_t port, double tout,
-                            int32_t mport, uint64_t ts, double iv);
+                            int32_t mport, uint64_t ts, double iv, bool secure,
+                            const char* capath, const char* pkpath, const char* certpath);
 static int32_t procinform(const char* host, int32_t port, double tout,
                           const char* swname, double swtime, const char* ssname, bool ssbrd,
-                          const char* dbexpr, bool st);
+                          const char* dbexpr, bool st, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath);
 static int32_t procclear(const char* host, int32_t port, double tout,
                          const char* swname, double swtime, const char* ssname, bool ssbrd,
-                         const char* dbexpr);
+                         const char* dbexpr, bool secure,
+                         const char* capath, const char* pkpath, const char* certpath);
 static int32_t procsync(const char* host, int32_t port, double tout,
                         const char* swname, double swtime, const char* ssname, bool ssbrd,
-                        const char* dbexpr, bool hard, const char* cmd);
+                        const char* dbexpr, bool hard, const char* cmd, bool secure,
+                        const char* capath, const char* pkpath, const char* certpath);
 static int32_t procset(const char* kbuf, size_t ksiz, const char* vbuf, size_t vsiz,
                        const char* host, int32_t port, double tout,
                        const char* swname, double swtime, const char* ssname, bool ssbrd,
-                       const char* dbexpr, int32_t mode, int64_t xt);
+                       const char* dbexpr, int32_t mode, int64_t xt, bool secure,
+                       const char* capath, const char* pkpath, const char* certpath);
 static int32_t procremove(const char* kbuf, size_t ksiz,
                           const char* host, int32_t port, double tout,
                           const char* swname, double swtime, const char* ssname, bool ssbrd,
-                          const char* dbexpr);
+                          const char* dbexpr, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath);
 static int32_t procget(const char* kbuf, size_t ksiz,
                        const char* host, int32_t port, double tout,
                        const char* swname, double swtime, const char* ssname, bool ssbrd,
-                       const char* dbexpr, bool rm, bool px, bool pt, bool pz);
+                       const char* dbexpr, bool rm, bool px, bool pt, bool pz, bool secure,
+                       const char* capath, const char* pkpath, const char* certpath);
 static int32_t proclist(const char* kbuf, size_t ksiz,
                         const char* host, int32_t port, double tout,
                         const char* swname, double swtime, const char* ssname, bool ssbrd,
                         const char* dbexpr, bool des, int64_t max,
-                        bool rm, bool pv, bool px, bool pt);
+                        bool rm, bool pv, bool px, bool pt, bool secure,
+                        const char* capath, const char* pkpath, const char* certpath);
 static int32_t procimport(const char* file, const char* host, int32_t port, double tout,
-                          const char* dbexpr, bool sx, int64_t xt);
+                          const char* dbexpr, bool sx, int64_t xt, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath);
 static int32_t procvacuum(const char* host, int32_t port, double tout,
                           const char* swname, double swtime, const char* ssname, bool ssbrd,
-                          const char* dbexpr, int64_t step);
+                          const char* dbexpr, int64_t step, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath);
 static int32_t procslave(const char* host, int32_t port, double tout,
-                         uint64_t ts, int32_t sid, int32_t opts, bool uw, bool uf, bool ur);
+                         uint64_t ts, int32_t sid, int32_t opts, bool uw, bool uf, bool ur, bool secure,
+                         const char* capath, const char* pkpath, const char* certpath);
 static int32_t procsetbulk(const std::map<std::string, std::string>& recs,
                            const char* host, int32_t port, double tout, bool bin,
                            const char* swname, double swtime, const char* ssname, bool ssbrd,
-                           const char* dbexpr, int64_t xt);
+                           const char* dbexpr, int64_t xt, bool secure,
+                           const char* capath, const char* pkpath, const char* certpath);
 static int32_t procremovebulk(const std::vector<std::string>& keys,
                               const char* host, int32_t port, double tout, bool bin,
                               const char* swname, double swtime, const char* ssname, bool ssbrd,
-                              const char* dbexpr);
+                              const char* dbexpr, bool secure,
+                              const char* capath, const char* pkpath, const char* certpath);
 static int32_t procgetbulk(const std::vector<std::string>& keys,
                            const char* host, int32_t port, double tout, bool bin,
                            const char* swname, double swtime, const char* ssname, bool ssbrd,
-                           const char* dbexpr, bool px);
+                           const char* dbexpr, bool px, bool secure,
+                           const char* capath, const char* pkpath, const char* certpath);
 
 
 // print the usage and exit
@@ -147,46 +163,46 @@ static void usage() {
   eprintf("%s: the command line utility of the remote database of Kyoto Tycoon\n", g_progname);
   eprintf("\n");
   eprintf("usage:\n");
-  eprintf("  %s report [-host str] [-port num] [-tout num]\n", g_progname);
+  eprintf("  %s report [-host str] [-port num] [-tout num] [-sec] [-ca file] [-pk file] [-cert file]\n", g_progname);
   eprintf("  %s script [-host str] [-port num] [-tout num] [-bin]"
-          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] proc [args...]\n", g_progname);
+          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-sec] [-ca file] [-pk file] [-cert file] proc [args...]\n", g_progname);
   eprintf("  %s tunerepl [-host str] [-port num] [-tout num] [-mport num] [-ts num] [-iv num]"
-          " [mhost]\n", g_progname);
+          " [mhost] [-sec] [-ca file] [-pk file] [-cert file]\n", g_progname);
   eprintf("  %s inform [-host str] [-port num] [-tout num]"
-          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-st]\n", g_progname);
+          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-st] [-sec] [-ca file] [-pk file] [-cert file]\n", g_progname);
   eprintf("  %s clear [-host str] [-port num] [-tout num]"
-          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str]\n", g_progname);
+          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-sec] [-ca file] [-pk file] [-cert file]\n", g_progname);
   eprintf("  %s sync [-host str] [-port num] [-tout num]"
-          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-hard] [-cmd str]\n",
+          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-hard] [-cmd str] [-sec] [-ca file] [-pk file] [-cert file]\n",
           g_progname);
   eprintf("  %s set [-host str] [-port num] [-tout num]"
           " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str]"
-          " [-add|-rep|-app|-inci|-incd] [-sx] [-xt num] key value\n", g_progname);
+          " [-add|-rep|-app|-inci|-incd] [-sx] [-xt num] [-sec] [-ca file] [-pk file] [-cert file] key value\n", g_progname);
   eprintf("  %s remove [-host str] [-port num] [-tout num]"
-          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-sx] key\n",
+          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-sx] [-sec] [-ca file] [-pk file] [-cert file] key\n",
           g_progname);
   eprintf("  %s get [-host str] [-port num] [-tout num]"
           " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str]"
-          " [-rm] [-sx] [-px] [-pt] [-pz] key\n", g_progname);
+          " [-rm] [-sx] [-px] [-pt] [-pz] [-sec] [-ca file] [-pk file] [-cert file] key\n", g_progname);
   eprintf("  %s list [-host str] [-port num] [-tout num]"
           " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str]"
-          " [-des] [-max num] [-rm] [-sx] [-pv] [-px] [-pt] [key]\n", g_progname);
-  eprintf("  %s import [-host str] [-port num] [-tout num] [-db str] [-sx] [-xt num] [file]\n",
+          " [-des] [-max num] [-rm] [-sx] [-pv] [-px] [-pt] [key] [-sec] [-ca file] [-pk file] [-cert file]\n", g_progname);
+  eprintf("  %s import [-host str] [-port num] [-tout num] [-db str] [-sx] [-xt num] [-sec] [-ca file] [-pk file] [-cert file] [file]\n",
           g_progname);
   eprintf("  %s vacuum [-host str] [-port num] [-tout num]"
-          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-step num]\n",
+          " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-step num] [-sec] [-ca file] [-pk file] [-cert file]\n",
           g_progname);
   eprintf("  %s slave [-host str] [-port num] [-tout num] [-ts num] [-sid num]"
-          " [-ux] [-uw] [-uf] [-ur]\n", g_progname);
+          " [-ux] [-uw] [-uf] [-ur] [-sec] [-ca file] [-pk file] [-cert file]\n", g_progname);
   eprintf("  %s setbulk [-host str] [-port num] [-tout num] [-bin]"
           " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-sx] [-xt num]"
-          " key value ...\n", g_progname);
+          " [-sec] [-ca file] [-pk file] [-cert file] key value ...\n", g_progname);
   eprintf("  %s removebulk [-host str] [-port num] [-tout num] [-bin]"
           " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-sx]"
-          " key ...\n", g_progname);
+          " [-sec] [-ca file] [-pk file] [-cert file] key ...\n", g_progname);
   eprintf("  %s getbulk [-host str] [-port num] [-tout num] [-bin]"
           " [-swname str] [-swtime num] [-ssname str] [-ssbrd] [-db str] [-sx] [-px]"
-          " key ...\n", g_progname);
+          " [-sec] [-ca file] [-pk file] [-cert file] key ...\n", g_progname);
   eprintf("\n");
   std::exit(1);
 }
@@ -206,6 +222,10 @@ static int32_t runreport(int argc, char** argv) {
   const char* host = "";
   int32_t port = kt::DEFPORT;
   double tout = 0;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -219,6 +239,17 @@ static int32_t runreport(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-tout")) {
         if (++i >= argc) usage();
         tout = kc::atof(argv[i]);
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -228,7 +259,7 @@ static int32_t runreport(int argc, char** argv) {
     }
   }
   if (port < 1) usage();
-  int32_t rv = procreport(host, port, tout);
+  int32_t rv = procreport(host, port, tout, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -246,6 +277,10 @@ static int32_t runscript(int argc, char** argv) {
   const char* ssname = NULL;
   bool ssbrd = false;
   std::map<std::string, std::string> params;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -272,6 +307,17 @@ static int32_t runscript(int argc, char** argv) {
         ssname = argv[i];
       } else if (!std::strcmp(argv[i], "-ssbrd")) {
         ssbrd = false;
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -284,7 +330,7 @@ static int32_t runscript(int argc, char** argv) {
     }
   }
   if (!proc || port < 1) usage();
-  int32_t rv = procscript(proc, host, port, tout, bin, swname, swtime, ssname, ssbrd, params);
+  int32_t rv = procscript(proc, host, port, tout, bin, swname, swtime, ssname, ssbrd, params, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -299,6 +345,10 @@ static int32_t runtunerepl(int argc, char** argv) {
   int32_t mport = kt::DEFPORT;
   uint64_t ts = kc::UINT64MAX;
   double iv = -1;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -325,6 +375,17 @@ static int32_t runtunerepl(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-iv")) {
         if (++i >= argc) usage();
         iv = kc::atof(argv[i]);
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -336,7 +397,7 @@ static int32_t runtunerepl(int argc, char** argv) {
     }
   }
   if (port < 1 || mport < 1) usage();
-  int32_t rv = proctunerepl(mhost, host, port, tout, mport, ts, iv);
+  int32_t rv = proctunerepl(mhost, host, port, tout, mport, ts, iv, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -353,6 +414,10 @@ static int32_t runinform(int argc, char** argv) {
   bool ssbrd = false;
   const char* dbexpr = NULL;
   bool st = false;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -382,6 +447,17 @@ static int32_t runinform(int argc, char** argv) {
         dbexpr = argv[i];
       } else if (!std::strcmp(argv[i], "-st")) {
         st = true;
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -391,7 +467,7 @@ static int32_t runinform(int argc, char** argv) {
     }
   }
   if (port < 1) usage();
-  int32_t rv = procinform(host, port, tout, swname, swtime, ssname, ssbrd, dbexpr, st);
+  int32_t rv = procinform(host, port, tout, swname, swtime, ssname, ssbrd, dbexpr, st, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -407,6 +483,10 @@ static int32_t runclear(int argc, char** argv) {
   const char* ssname = NULL;
   bool ssbrd = false;
   const char* dbexpr = NULL;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -434,6 +514,17 @@ static int32_t runclear(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-db")) {
         if (++i >= argc) usage();
         dbexpr = argv[i];
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -443,7 +534,7 @@ static int32_t runclear(int argc, char** argv) {
     }
   }
   if (port < 1) usage();
-  int32_t rv = procclear(host, port, tout, swname, swtime, ssname, ssbrd, dbexpr);
+  int32_t rv = procclear(host, port, tout, swname, swtime, ssname, ssbrd, dbexpr, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -461,6 +552,10 @@ static int32_t runsync(int argc, char** argv) {
   const char* dbexpr = NULL;
   bool hard = false;
   const char* cmd = "";
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -493,6 +588,17 @@ static int32_t runsync(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-cmd")) {
         if (++i >= argc) usage();
         cmd = argv[i];
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -502,7 +608,7 @@ static int32_t runsync(int argc, char** argv) {
     }
   }
   if (port < 1) usage();
-  int32_t rv = procsync(host, port, tout, swname, swtime, ssname, ssbrd, dbexpr, hard, cmd);
+  int32_t rv = procsync(host, port, tout, swname, swtime, ssname, ssbrd, dbexpr, hard, cmd, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -523,6 +629,10 @@ static int32_t runset(int argc, char** argv) {
   int32_t mode = 0;
   bool sx = false;
   int64_t xt = kc::INT64MAX;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -565,6 +675,17 @@ static int32_t runset(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-xt")) {
         if (++i >= argc) usage();
         xt = kc::atoix(argv[i]);
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -599,7 +720,7 @@ static int32_t runset(int argc, char** argv) {
     usage();
   }
   int32_t rv = procset(kstr, ksiz, vstr, vsiz, host, port, tout, swname, swtime, ssname, ssbrd,
-                       dbexpr, mode, xt);
+                       dbexpr, mode, xt, secure, capath, pkpath, certpath);
   delete[] kbuf;
   delete[] vbuf;
   return rv;
@@ -619,6 +740,10 @@ static int32_t runremove(int argc, char** argv) {
   bool ssbrd = false;
   const char* dbexpr = NULL;
   bool sx = false;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -648,6 +773,17 @@ static int32_t runremove(int argc, char** argv) {
         dbexpr = argv[i];
       } else if (!std::strcmp(argv[i], "-sx")) {
         sx = true;
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -672,7 +808,7 @@ static int32_t runremove(int argc, char** argv) {
     delete[] kbuf;
     usage();
   }
-  int32_t rv = procremove(kstr, ksiz, host, port, tout, swname, swtime, ssname, ssbrd, dbexpr);
+  int32_t rv = procremove(kstr, ksiz, host, port, tout, swname, swtime, ssname, ssbrd, dbexpr, secure, capath, pkpath, certpath);
   delete[] kbuf;
   return rv;
 }
@@ -695,6 +831,10 @@ static int32_t runget(int argc, char** argv) {
   bool px = false;
   bool pt = false;
   bool pz = false;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -732,6 +872,17 @@ static int32_t runget(int argc, char** argv) {
         pt = true;
       } else if (!std::strcmp(argv[i], "-pz")) {
         pz = true;
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -757,7 +908,7 @@ static int32_t runget(int argc, char** argv) {
     usage();
   }
   int32_t rv = procget(kstr, ksiz, host, port, tout, swname, swtime, ssname, ssbrd,
-                       dbexpr, rm, px, pt, pz);
+                       dbexpr, rm, px, pt, pz, secure, capath, pkpath, certpath);
   delete[] kbuf;
   return rv;
 }
@@ -782,6 +933,10 @@ static int32_t runlist(int argc, char** argv) {
   bool pv = false;
   bool px = false;
   bool pt = false;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -824,6 +979,17 @@ static int32_t runlist(int argc, char** argv) {
         px = true;
       } else if (!std::strcmp(argv[i], "-pt")) {
         pt = true;
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -852,7 +1018,7 @@ static int32_t runlist(int argc, char** argv) {
     usage();
   }
   int32_t rv = proclist(kbuf, ksiz, host, port, tout, swname, swtime, ssname, ssbrd,
-                        dbexpr, des, max, rm, pv, px, pt);
+                        dbexpr, des, max, rm, pv, px, pt, secure, capath, pkpath, certpath);
   delete[] kbuf;
   return rv;
 }
@@ -868,6 +1034,10 @@ static int32_t runimport(int argc, char** argv) {
   const char* dbexpr = NULL;
   bool sx = false;
   int64_t xt = kc::INT64MAX;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -889,6 +1059,17 @@ static int32_t runimport(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-xt")) {
         if (++i >= argc) usage();
         xt = kc::atoix(argv[i]);
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -900,7 +1081,7 @@ static int32_t runimport(int argc, char** argv) {
     }
   }
   if (port < 1) usage();
-  int32_t rv = procimport(file, host, port, tout, dbexpr, sx, xt);
+  int32_t rv = procimport(file, host, port, tout, dbexpr, sx, xt, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -917,6 +1098,10 @@ static int32_t runvacuum(int argc, char** argv) {
   bool ssbrd = false;
   const char* dbexpr = NULL;
   int64_t step = 0;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -947,6 +1132,17 @@ static int32_t runvacuum(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-step")) {
         if (++i >= argc) usage();
         step = kc::atoix(argv[i]);
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -956,7 +1152,7 @@ static int32_t runvacuum(int argc, char** argv) {
     }
   }
   if (port < 1) usage();
-  int32_t rv = procvacuum(host, port, tout, swname, swtime, ssname, ssbrd, dbexpr, step);
+  int32_t rv = procvacuum(host, port, tout, swname, swtime, ssname, ssbrd, dbexpr, step, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -973,6 +1169,10 @@ static int32_t runslave(int argc, char** argv) {
   int32_t opts = 0;
   bool uf = false;
   bool ur = false;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -1004,6 +1204,17 @@ static int32_t runslave(int argc, char** argv) {
         uf = true;
       } else if (!std::strcmp(argv[i], "-ur")) {
         ur = true;
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -1013,7 +1224,7 @@ static int32_t runslave(int argc, char** argv) {
     }
   }
   if (port < 1) usage();
-  int32_t rv = procslave(host, port, tout, ts, sid, opts, uw, uf, ur);
+  int32_t rv = procslave(host, port, tout, ts, sid, opts, uw, uf, ur, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -1033,6 +1244,10 @@ static int32_t runsetbulk(int argc, char** argv) {
   const char* dbexpr = NULL;
   bool sx = false;
   int64_t xt = kc::INT64MAX;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -1067,6 +1282,17 @@ static int32_t runsetbulk(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-xt")) {
         if (++i >= argc) usage();
         xt = kc::atoix(argv[i]);
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -1098,7 +1324,7 @@ static int32_t runsetbulk(int argc, char** argv) {
     }
   }
   int32_t rv = procsetbulk(recs, host, port, tout, bin, swname, swtime, ssname, ssbrd,
-                           dbexpr, xt);
+                           dbexpr, xt, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -1117,6 +1343,10 @@ static int32_t runremovebulk(int argc, char** argv) {
   bool ssbrd = false;
   const char* dbexpr = NULL;
   bool sx = false;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -1148,6 +1378,17 @@ static int32_t runremovebulk(int argc, char** argv) {
         dbexpr = argv[i];
       } else if (!std::strcmp(argv[i], "-sx")) {
         sx = true;
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -1169,7 +1410,7 @@ static int32_t runremovebulk(int argc, char** argv) {
     }
   }
   int32_t rv = procremovebulk(keys, host, port, tout, bin, swname, swtime, ssname, ssbrd,
-                              dbexpr);
+                              dbexpr, secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -1189,6 +1430,10 @@ static int32_t rungetbulk(int argc, char** argv) {
   const char* dbexpr = NULL;
   bool sx = false;
   bool px = false;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -1222,6 +1467,17 @@ static int32_t rungetbulk(int argc, char** argv) {
         sx = true;
       } else if (!std::strcmp(argv[i], "-px")) {
         px = true;
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -1243,15 +1499,16 @@ static int32_t rungetbulk(int argc, char** argv) {
     }
   }
   int32_t rv = procgetbulk(keys, host, port, tout, bin, swname, swtime, ssname, ssbrd,
-                           dbexpr, px);
+                           dbexpr, px, secure, capath, pkpath, certpath);
   return rv;
 }
 
 
 // perform report command
-static int32_t procreport(const char* host, int32_t port, double tout) {
+static int32_t procreport(const char* host, int32_t port, double tout, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1280,9 +1537,10 @@ static int32_t procreport(const char* host, int32_t port, double tout) {
 static int32_t procscript(const char* proc, const char* host, int32_t port, double tout,
                           bool bin, const char* swname, double swtime,
                           const char* ssname, bool ssbrd,
-                          const std::map<std::string, std::string>& params) {
+                          const std::map<std::string, std::string>& params,
+                          bool secure, const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1326,9 +1584,10 @@ static int32_t procscript(const char* proc, const char* host, int32_t port, doub
 
 // perform tunerepl command
 static int32_t proctunerepl(const char* mhost, const char* host, int32_t port, double tout,
-                            int32_t mport, uint64_t ts, double iv) {
+                            int32_t mport, uint64_t ts, double iv, bool secure,
+                            const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1348,9 +1607,10 @@ static int32_t proctunerepl(const char* mhost, const char* host, int32_t port, d
 // perform inform command
 static int32_t procinform(const char* host, int32_t port, double tout,
                           const char* swname, double swtime, const char* ssname, bool ssbrd,
-                          const char* dbexpr, bool st) {
+                          const char* dbexpr, bool st, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1386,9 +1646,10 @@ static int32_t procinform(const char* host, int32_t port, double tout,
 // perform clear command
 static int32_t procclear(const char* host, int32_t port, double tout,
                          const char* swname, double swtime, const char* ssname, bool ssbrd,
-                         const char* dbexpr) {
+                         const char* dbexpr, bool secure,
+                         const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1411,9 +1672,10 @@ static int32_t procclear(const char* host, int32_t port, double tout,
 // perform sync command
 static int32_t procsync(const char* host, int32_t port, double tout,
                         const char* swname, double swtime, const char* ssname, bool ssbrd,
-                        const char* dbexpr, bool hard, const char* cmd) {
+                        const char* dbexpr, bool hard, const char* cmd, bool secure,
+                        const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1437,9 +1699,10 @@ static int32_t procsync(const char* host, int32_t port, double tout,
 static int32_t procset(const char* kbuf, size_t ksiz, const char* vbuf, size_t vsiz,
                        const char* host, int32_t port, double tout,
                        const char* swname, double swtime, const char* ssname, bool ssbrd,
-                       const char* dbexpr, int32_t mode, int64_t xt) {
+                       const char* dbexpr, int32_t mode, int64_t xt, bool secure,
+                       const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1509,9 +1772,10 @@ static int32_t procset(const char* kbuf, size_t ksiz, const char* vbuf, size_t v
 static int32_t procremove(const char* kbuf, size_t ksiz,
                           const char* host, int32_t port, double tout,
                           const char* swname, double swtime, const char* ssname, bool ssbrd,
-                          const char* dbexpr) {
+                          const char* dbexpr, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1535,9 +1799,10 @@ static int32_t procremove(const char* kbuf, size_t ksiz,
 static int32_t procget(const char* kbuf, size_t ksiz,
                        const char* host, int32_t port, double tout,
                        const char* swname, double swtime, const char* ssname, bool ssbrd,
-                       const char* dbexpr, bool rm, bool px, bool pt, bool pz) {
+                       const char* dbexpr, bool rm, bool px, bool pt, bool pz, bool secure,
+                       const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1575,9 +1840,10 @@ static int32_t proclist(const char* kbuf, size_t ksiz,
                         const char* host, int32_t port, double tout,
                         const char* swname, double swtime, const char* ssname, bool ssbrd,
                         const char* dbexpr, bool des, int64_t max,
-                        bool rm, bool pv, bool px, bool pt) {
+                        bool rm, bool pv, bool px, bool pt, bool secure,
+                        const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1679,7 +1945,8 @@ static int32_t proclist(const char* kbuf, size_t ksiz,
 
 // perform import command
 static int32_t procimport(const char* file, const char* host, int32_t port, double tout,
-                          const char* dbexpr, bool sx, int64_t xt) {
+                          const char* dbexpr, bool sx, int64_t xt, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath) {
   std::istream *is = &std::cin;
   std::ifstream ifs;
   if (file) {
@@ -1691,7 +1958,7 @@ static int32_t procimport(const char* file, const char* host, int32_t port, doub
     is = &ifs;
   }
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1746,9 +2013,10 @@ static int32_t procimport(const char* file, const char* host, int32_t port, doub
 // perform vacuum command
 static int32_t procvacuum(const char* host, int32_t port, double tout,
                           const char* swname, double swtime, const char* ssname, bool ssbrd,
-                          const char* dbexpr, int64_t step) {
+                          const char* dbexpr, int64_t step, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1770,11 +2038,13 @@ static int32_t procvacuum(const char* host, int32_t port, double tout,
 
 // perform slave command
 static int32_t procslave(const char* host, int32_t port, double tout,
-                         uint64_t ts, int32_t sid, int32_t opts, bool uw, bool uf, bool ur) {
+                         uint64_t ts, int32_t sid, int32_t opts, bool uw,
+                         bool uf, bool ur, bool secure,
+                         const char* capath, const char* pkpath, const char* certpath) {
   bool err = false;
   if (uf || ur) {
     kt::RemoteDB db;
-    if (!db.open(host, port, tout)) {
+    if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
       dberrprint(&db, "DB::open failed");
       return 1;
     }
@@ -1857,9 +2127,10 @@ static int32_t procslave(const char* host, int32_t port, double tout,
 static int32_t procsetbulk(const std::map<std::string, std::string>& recs,
                            const char* host, int32_t port, double tout, bool bin,
                            const char* swname, double swtime, const char* ssname, bool ssbrd,
-                           const char* dbexpr, int64_t xt) {
+                           const char* dbexpr, int64_t xt, bool secure,
+                           const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1899,9 +2170,10 @@ static int32_t procsetbulk(const std::map<std::string, std::string>& recs,
 static int32_t procremovebulk(const std::vector<std::string>& keys,
                               const char* host, int32_t port, double tout, bool bin,
                               const char* swname, double swtime, const char* ssname, bool ssbrd,
-                              const char* dbexpr) {
+                              const char* dbexpr, bool secure,
+                              const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }
@@ -1941,9 +2213,10 @@ static int32_t procremovebulk(const std::vector<std::string>& keys,
 static int32_t procgetbulk(const std::vector<std::string>& keys,
                            const char* host, int32_t port, double tout, bool bin,
                            const char* swname, double swtime, const char* ssname, bool ssbrd,
-                           const char* dbexpr, bool px) {
+                           const char* dbexpr, bool px, bool secure,
+                           const char* capath, const char* pkpath, const char* certpath) {
   kt::RemoteDB db;
-  if (!db.open(host, port, tout)) {
+  if (!db.open(host, port, tout, secure, capath, pkpath, certpath)) {
     dberrprint(&db, "DB::open failed");
     return 1;
   }

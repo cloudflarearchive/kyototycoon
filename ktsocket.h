@@ -90,12 +90,18 @@ class Socket : public Pollable {
    * @return the last happened error information.
    */
   const char* error();
-  /**
+  bool open(const std::string& expr);
+  /*
    * Open a client socket.
    * @param expr an expression of the address and the port of the server.
+   * @param bool secure if this is to be a secure socket
+   * @param char* ca path of the ca
+   * @param char* pk path of the private key
+   * @param char* cert path of the certificate
    * @return true on success, or false on failure.
    */
-  bool open(const std::string& expr);
+  bool open(const std::string& expr, bool secure = false,
+            const char* ca = NULL, const char* pk = NULL, const char* cert = NULL);
   /**
    * Close the socket.
    * @param grace true for graceful shutdown, or false for immediate disconnection.
@@ -248,9 +254,14 @@ class ServerSocket : public Pollable {
   /**
    * Accept a connection from a client.
    * @param sock the socket object to manage the connection.
+   * @param bool secure if this is to be a secure socket
+   * @param char* ca path of the ca
+   * @param char* pk path of the private key
+   * @param char* cert path of the certificate
    * @return true on success, or false on failure.
    */
-  bool accept(Socket* sock);
+  bool accept(Socket* sock, bool secure = false,
+              const char* ca = NULL, const char* pk = NULL, const char* cert = NULL);
   /**
    * Abort the current operation.
    * @return true on success, or false on failure.

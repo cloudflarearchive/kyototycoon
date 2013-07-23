@@ -33,15 +33,19 @@ static int32_t runbulk(int argc, char** argv);
 static int32_t runwicked(int argc, char** argv);
 static int32_t runusual(int argc, char** argv);
 static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, int32_t mode,
-                         const char* host, int32_t port, double tout);
+                         const char* host, int32_t port, double tout, bool secure,
+                         const char* capath, const char* pkpath, const char* certpath);
 static int32_t procbulk(int64_t rnum, int32_t thnum, bool bin, bool rnd, int32_t mode,
                         int32_t bulk, const char* host, int32_t port, double tout,
-                        int32_t bopts);
+                        int32_t bopts, bool secure,
+                        const char* capath, const char* pkpath, const char* certpath);
 static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
-                          const char* host, int32_t port, double tout);
+                          const char* host, int32_t port, double tout, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath);
 static int32_t procusual(int64_t rnum, int32_t thnum, int32_t itnum,
                          const char* host, int32_t port, double tout,
-                         int64_t kp, int64_t vs, int64_t xt, double iv);
+                         int64_t kp, int64_t vs, int64_t xt, double iv, bool secure,
+                         const char* capath, const char* pkpath, const char* certpath);
 
 
 // main routine
@@ -82,13 +86,17 @@ static void usage() {
   eprintf("\n");
   eprintf("usage:\n");
   eprintf("  %s order [-th num] [-rnd] [-set|-get|-rem|-etc]"
-          " [-host str] [-port num] [-tout num] rnum\n", g_progname);
+          " [-host str] [-port num] [-tout num]"
+          " [-sec] [-ca file] [-pk file] [-cert file] rnum\n", g_progname);
   eprintf("  %s bulk [-th num] [-bin] [-rnd] [-set|-get|-rem|-etc] [-bulk num]"
-          " [-host str] [-port num] [-tout num] [-bnr] rnum\n", g_progname);
-  eprintf("  %s wicked [-th num] [-it num] [-host str] [-port num] [-tout num] rnum\n",
+          " [-host str] [-port num] [-tout num] [-bnr]"
+          " [-sec] [-ca file] [-pk file] [-cert file] rnum\n", g_progname);
+  eprintf("  %s wicked [-th num] [-it num] [-host str] [-port num] [-tout num]"
+          " [-sec] [-ca file] [-pk file] [-cert file] rnum\n",
           g_progname);
   eprintf("  %s usual [-th num] [-host str] [-port num] [-tout num]"
-          " [-kp num] [-vs num] [-xt num] [-iv num] rnum\n", g_progname);
+          " [-kp num] [-vs num] [-xt num] [-iv num]"
+          " [-sec] [-ca file] [-pk file] [-cert file] rnum\n", g_progname);
   eprintf("\n");
   std::exit(1);
 }
@@ -134,6 +142,10 @@ static int32_t runorder(int argc, char** argv) {
   const char* host = "";
   int32_t port = kt::DEFPORT;
   double tout = 0;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -160,6 +172,17 @@ static int32_t runorder(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-tout")) {
         if (++i >= argc) usage();
         tout = kc::atof(argv[i]);
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -174,7 +197,8 @@ static int32_t runorder(int argc, char** argv) {
   int64_t rnum = kc::atoix(rstr);
   if (rnum < 1 || thnum < 1 || port < 1) usage();
   if (thnum > THREADMAX) thnum = THREADMAX;
-  int32_t rv = procorder(rnum, thnum, rnd, mode, host, port, tout);
+  int32_t rv = procorder(rnum, thnum, rnd, mode, host, port, tout,
+                         secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -192,6 +216,10 @@ static int32_t runbulk(int argc, char** argv) {
   int32_t port = kt::DEFPORT;
   double tout = 0;
   int32_t bopts = 0;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -239,7 +267,8 @@ static int32_t runbulk(int argc, char** argv) {
   int64_t rnum = kc::atoix(rstr);
   if (rnum < 1 || thnum < 1 || bulk < 1 || port < 1) usage();
   if (thnum > THREADMAX) thnum = THREADMAX;
-  int32_t rv = procbulk(rnum, thnum, bin, rnd, mode, bulk, host, port, tout, bopts);
+  int32_t rv = procbulk(rnum, thnum, bin, rnd, mode, bulk, host, port, tout, bopts,
+                        secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -253,6 +282,10 @@ static int32_t runwicked(int argc, char** argv) {
   const char* host = "";
   int32_t port = kt::DEFPORT;
   double tout = 0;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -272,6 +305,17 @@ static int32_t runwicked(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-tout")) {
         if (++i >= argc) usage();
         tout = kc::atof(argv[i]);
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -286,7 +330,8 @@ static int32_t runwicked(int argc, char** argv) {
   int64_t rnum = kc::atoix(rstr);
   if (rnum < 1 || thnum < 1 || port < 1) usage();
   if (thnum > THREADMAX) thnum = THREADMAX;
-  int32_t rv = procwicked(rnum, thnum, itnum, host, port, tout);
+  int32_t rv = procwicked(rnum, thnum, itnum, host, port, tout,
+                          secure, capath, pkpath, certpath);
   return rv;
 }
 
@@ -304,6 +349,10 @@ static int32_t runusual(int argc, char** argv) {
   int64_t vs = 0;
   int64_t xt = 0;
   double iv = 0;
+  bool secure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
   for (int32_t i = 2; i < argc; i++) {
     if (!argbrk && argv[i][0] == '-') {
       if (!std::strcmp(argv[i], "--")) {
@@ -335,6 +384,17 @@ static int32_t runusual(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-iv")) {
         if (++i >= argc) usage();
         iv = kc::atof(argv[i]);
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
       } else {
         usage();
       }
@@ -350,14 +410,16 @@ static int32_t runusual(int argc, char** argv) {
   if (rnum < 1 || thnum < 1 || port < 1) usage();
   if (thnum > THREADMAX) thnum = THREADMAX;
   if (kp < 1) kp = rnum * thnum;
-  int32_t rv = procusual(rnum, thnum, itnum, host, port, tout, kp, vs, xt, iv);
+  int32_t rv = procusual(rnum, thnum, itnum, host, port, tout, kp, vs, xt, iv,
+                         secure, capath, pkpath, certpath);
   return rv;
 }
 
 
 // perform order command
 static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, int32_t mode,
-                         const char* host, int32_t port, double tout) {
+                         const char* host, int32_t port, double tout, bool secure,
+                         const char* capath, const char* pkpath, const char* certpath) {
   oprintf("<In-order Test>\n  seed=%u  rnum=%lld  thnum=%d  rnd=%d  mode=%d  host=%s  port=%d"
           "  tout=%f\n\n", g_randseed, (long long)rnum, thnum, rnd, mode, host, port, tout);
   bool err = false;
@@ -365,7 +427,7 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, int32_t mode,
   double stime = kc::time();
   kt::RemoteDB* dbs = new kt::RemoteDB[thnum];
   for (int32_t i = 0; i < thnum; i++) {
-    if (!dbs[i].open(host, port, tout)) {
+    if (!dbs[i].open(host, port, tout, secure, capath, pkpath, certpath)) {
       dberrprint(dbs + i, __LINE__, "DB::open");
       err = true;
     }
@@ -793,7 +855,8 @@ static int32_t procorder(int64_t rnum, int32_t thnum, bool rnd, int32_t mode,
 // perform bulk command
 static int32_t procbulk(int64_t rnum, int32_t thnum, bool bin, bool rnd, int32_t mode,
                         int32_t bulk, const char* host, int32_t port, double tout,
-                        int32_t bopts) {
+                        int32_t bopts, bool secure,
+                        const char* capath, const char* pkpath, const char* certpath) {
   oprintf("<Bulk Test>\n  seed=%u  rnum=%lld  thnum=%d  bin=%d  rnd=%d  mode=%d  bulk=%d"
           "  host=%s  port=%d  tout=%f  bopts=%d\n\n",
           g_randseed, (long long)rnum, thnum, bin, rnd, mode, bulk, host, port, tout, bopts);
@@ -802,7 +865,7 @@ static int32_t procbulk(int64_t rnum, int32_t thnum, bool bin, bool rnd, int32_t
   double stime = kc::time();
   kt::RemoteDB* dbs = new kt::RemoteDB[thnum];
   for (int32_t i = 0; i < thnum; i++) {
-    if (!dbs[i].open(host, port, tout)) {
+    if (!dbs[i].open(host, port, tout, secure, capath, pkpath, certpath)) {
       dberrprint(dbs + i, __LINE__, "DB::open");
       err = true;
     }
@@ -1270,7 +1333,8 @@ static int32_t procbulk(int64_t rnum, int32_t thnum, bool bin, bool rnd, int32_t
 
 // perform wicked command
 static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
-                          const char* host, int32_t port, double tout) {
+                          const char* host, int32_t port, double tout, bool secure,
+                          const char* capath, const char* pkpath, const char* certpath) {
   oprintf("<Wicked Test>\n  seed=%u  rnum=%lld  thnum=%d  itnum=%d  host=%s  port=%d"
           "  tout=%f\n\n", g_randseed, (long long)rnum, thnum, itnum, host, port, tout);
   bool err = false;
@@ -1279,7 +1343,7 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
     double stime = kc::time();
     kt::RemoteDB* dbs = new kt::RemoteDB[thnum];
     for (int32_t i = 0; i < thnum; i++) {
-      if (!dbs[i].open(host, port, tout)) {
+      if (!dbs[i].open(host, port, tout, secure, capath, pkpath, certpath)) {
         dberrprint(dbs + i, __LINE__, "DB::open");
         err = true;
       }
@@ -1592,7 +1656,8 @@ static int32_t procwicked(int64_t rnum, int32_t thnum, int32_t itnum,
 // perform usual command
 static int32_t procusual(int64_t rnum, int32_t thnum, int32_t itnum,
                          const char* host, int32_t port, double tout,
-                         int64_t kp, int64_t vs, int64_t xt, double iv) {
+                         int64_t kp, int64_t vs, int64_t xt, double iv, bool secure,
+                         const char* capath, const char* pkpath, const char* certpath) {
   oprintf("<Usual Test>\n  seed=%u  rnum=%lld  thnum=%d  itnum=%d  host=%s  port=%d"
           "  tout=%f  kp=%lld  vs=%lld  xt=%lld  iv=%f\n\n",
           g_randseed, (long long)rnum, thnum, itnum, host, port, tout, kp, vs, xt, iv);
@@ -1601,7 +1666,7 @@ static int32_t procusual(int64_t rnum, int32_t thnum, int32_t itnum,
   double stime = kc::time();
   kt::RemoteDB* dbs = new kt::RemoteDB[thnum];
   for (int32_t i = 0; i < thnum; i++) {
-    if (!dbs[i].open(host, port, tout)) {
+    if (!dbs[i].open(host, port, tout, secure, capath, pkpath, certpath)) {
       dberrprint(dbs + i, __LINE__, "DB::open");
       err = true;
     }

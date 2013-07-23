@@ -41,6 +41,10 @@ extern const char* const FEATURES;
 const int32_t DEFPORT = 1978;
 
 
+/** The undefined port number. */
+const int32_t UNDEFPORT = 0;
+
+
 /**
  * Set the signal handler for termination signals.
  * @param handler the function pointer of the signal handler.

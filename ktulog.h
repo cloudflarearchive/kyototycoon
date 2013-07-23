@@ -23,6 +23,8 @@
 
 namespace kyototycoon {                  // common namespace
 
+/* The waiting seconds of auto flush. */
+#define FLUSHWAIT 0.1
 
 /**
  * Update logger.
@@ -47,8 +49,6 @@ class UpdateLogger {
   static const uint64_t TSWACC = 1000;
   /* The accuracy of logical time stamp. */
   static const uint64_t TSLACC = 1000 * 1000;
-  /* The waiting seconds of auto flush. */
-  static const double FLUSHWAIT = 0.1;
  public:
   /**
    * Reader of update logs.
@@ -95,7 +95,7 @@ class UpdateLogger {
           ulog_->flock_.lock_reader();
           uint32_t cid = kc::atoi(it->c_str());
           if (file_.refresh()) {
-            int64_t fsiz;
+            uint64_t fsiz;
             uint64_t fts;
             if (read_meta(&fsiz, &fts) && fts + TSWACC * TSLACC < ts) id_ = lid;
           }
@@ -113,7 +113,7 @@ class UpdateLogger {
         ulog_ = NULL;
         return false;
       }
-      int64_t fsiz;
+      uint64_t fsiz;
       uint64_t fts;
       if (!read_meta(&fsiz, &fts)) {
         file_.close();
@@ -166,17 +166,17 @@ class UpdateLogger {
      * @param tsp the pointer to the variable into which the time stamp is assigned.
      * @return true on success, or false on failure.
      */
-    bool read_meta(int64_t* sp, uint64_t* tsp) {
+    bool read_meta(uint64_t* sp, uint64_t* tsp) {
       _assert_(sp && tsp);
       char hbuf[1+sizeof(uint64_t)+sizeof(uint64_t)];
       int64_t psiz = file_.size();
       if (psiz < (int64_t)sizeof(hbuf) || !file_.read(0, hbuf, sizeof(hbuf))) return false;
       const char* rp = hbuf;
       if (*(uint8_t*)(rp++) != METAMAGIC) return false;
-      int64_t fsiz = kc::readfixnum(rp, sizeof(uint64_t));
+      uint64_t fsiz = kc::readfixnum(rp, sizeof(uint64_t));
       rp += sizeof(uint64_t);
       uint64_t fts = kc::readfixnum(rp, sizeof(uint64_t));
-      if (psiz < fsiz) return false;
+      if ((uint64_t)psiz < fsiz) return false;
       *sp = fsiz;
       *tsp = fts;
       off_ = sizeof(hbuf);
@@ -203,7 +203,7 @@ class UpdateLogger {
           if (kc::File::status(path)) {
             if (!file_.close()) return NULL;
             if (!file_.open(path, kc::File::OREADER | kc::File::ONOLOCK, 0)) return NULL;
-            int64_t fsiz;
+            uint64_t fsiz;
             uint64_t fts;
             if (!read_meta(&fsiz, &fts)) return NULL;
             id_ = nid;
@@ -472,7 +472,7 @@ class UpdateLogger {
           if (psiz >= (int64_t)sizeof(hbuf) && file.read(0, hbuf, sizeof(hbuf))) {
             const char* rp = hbuf;
             if (*(uint8_t*)(rp++) == METAMAGIC) {
-              int64_t fsiz = kc::readfixnum(rp, sizeof(uint64_t));
+              uint64_t fsiz = kc::readfixnum(rp, sizeof(uint64_t));
               rp += sizeof(uint64_t);
               uint64_t fts = kc::readfixnum(rp, sizeof(uint64_t));
               FileStatus fs = { path, fsiz, fts };
@@ -592,11 +592,11 @@ class UpdateLogger {
     if (psiz < (int64_t)sizeof(hbuf) || !file_.read(0, hbuf, sizeof(hbuf))) return false;
     const char* rp = hbuf;
     if (*(uint8_t*)(rp++) != METAMAGIC) return false;
-    int64_t fsiz = kc::readfixnum(rp, sizeof(uint64_t));
+    uint64_t fsiz = kc::readfixnum(rp, sizeof(uint64_t));
     rp += sizeof(uint64_t);
     uint64_t fts = kc::readfixnum(rp, sizeof(uint64_t));
-    if (psiz < fsiz || fsiz < (int64_t)sizeof(hbuf)) return false;
-    if (psiz > fsiz && !file_.truncate(fsiz)) return false;
+    if ((uint64_t)psiz < fsiz || fsiz < sizeof(hbuf)) return false;
+    if ((uint64_t)psiz > fsiz && !file_.truncate(fsiz)) return false;
     tswall_ = fts / TSLACC + 1;
     return true;
   }
@@ -608,7 +608,8 @@ class UpdateLogger {
     _assert_(true);
     bool err = false;
     flock_.lock_writer();
-    if (file_.size() >= limsiz_) {
+    int64_t filesiz = file_.size();
+    if (filesiz > 0 && filesiz >= limsiz_) {
       if (asi_ > 0 && !file_.synchronize(true)) err = true;
       if (!file_.close()) err = true;
       id_++;

@@ -480,7 +480,7 @@ static int32_t procmtecho(const char* host, int32_t port, double tout, int32_t t
   serv.set_worker(&worker, thnum);
   g_thserv = &serv;
   serv.log(kt::ThreadedServer::Logger::SYSTEM, "================ [START]");
-  if (serv.start()) {
+  if (serv.start_listening()) {
     if (serv.finish()) err = true;
   } else {
     err = true;

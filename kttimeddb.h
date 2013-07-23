@@ -1795,7 +1795,6 @@ class TimedDB {
         xt_ = *xtp;
         return NOP;
       }
-      char* vbuf_;
       int32_t vsiz_;
       int64_t xt_;
     };

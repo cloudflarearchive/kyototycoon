@@ -35,6 +35,7 @@ int32_t g_procid;                        // process ID number
 double g_starttime;                      // start time
 bool g_daemon;                           // daemon flag
 kt::RPCServer* g_serv;                   // running RPC server
+kt::RPCServer* g_serv_aux;               // running secondary RPC server
 bool g_restart;                          // restart flag
 
 
@@ -44,7 +45,13 @@ static void usage();
 static void killserver(int signum);
 static int32_t run(int argc, char** argv);
 static int32_t proc(const std::vector<std::string>& dbpaths,
-                    const char* host, int32_t port, double tout, int32_t thnum,
+                    const char* host, int32_t port,
+                    const char* auxhost, int32_t auxport,
+                    bool secure, bool msecure,
+                    const char* capath,
+                    const char* rpkpath, const char* rcertpath,
+                    const char* pkpath, const char* certpath,
+                    double tout, int32_t thnum,
                     const char* logpath, uint32_t logkinds,
                     const char* ulogpath, int64_t ulim, double uasi,
                     int32_t sid, int32_t omode, double asi, bool ash,
@@ -136,16 +143,20 @@ class DBLogger : public kc::BasicDB::Logger {
 };
 
 
-// replication slave implemantation
+// replication slave implementation
 class Slave : public kc::Thread {
   friend class Worker;
  public:
   // constructor
-  explicit Slave(uint16_t sid, const char* rtspath, const char* host, int32_t port, double riv,
+  explicit Slave(uint16_t sid, const char* rtspath, double riv,
                  kt::RPCServer* serv, kt::TimedDB* dbs, int32_t dbnum,
-                 kt::UpdateLogger* ulog, DBUpdateLogger* ulogdbs) :
-      lock_(), sid_(sid), rtspath_(rtspath), host_(""), port_(port), riv_(riv),
-      serv_(serv), dbs_(dbs), dbnum_(dbnum), ulog_(ulog), ulogdbs_(ulogdbs),
+                 kt::UpdateLogger* ulog, DBUpdateLogger* ulogdbs,
+                 const char* host = NULL, int32_t port = kt::DEFPORT,
+                 bool secure = false, const char* ca = NULL,
+                 const char* pk = NULL, const char* cert = NULL ) :
+      lock_(), sid_(sid), rtspath_(rtspath), host_(""), port_(port),
+      secure_(secure), ca_(ca), pk_(pk), cert_(cert),
+      riv_(riv), serv_(serv), dbs_(dbs), dbnum_(dbnum), ulogdbs_(ulogdbs),
       wrts_(kc::UINT64MAX), rts_(0), alive_(true), hup_(false) {
     if (host) host_ = host;
   }
@@ -214,7 +225,7 @@ class Slave : public kc::Thread {
           lock_.unlock();
         }
         kt::ReplicationClient rc;
-        if (rc.open(host, port, 60, rts_, sid_)) {
+        if (rc.open(host, port, 60, rts_, sid_, 0, secure_, ca_, pk_, cert_)) {
           serv_->log(Logger::SYSTEM, "replication started: host=%s port=%d rts=%llu",
                      host.c_str(), port, (unsigned long long)rts_);
           hup_ = false;
@@ -289,11 +300,14 @@ class Slave : public kc::Thread {
   const char* const rtspath_;
   std::string host_;
   int32_t port_;
+  bool secure_;
+  const char* const ca_;
+  const char* const pk_;
+  const char* const cert_;
   double riv_;
   kt::RPCServer* const serv_;
   kt::TimedDB* const dbs_;
   const int32_t dbnum_;
-  kt::UpdateLogger* const ulog_;
   DBUpdateLogger* const ulogdbs_;
   uint64_t wrts_;
   uint64_t rts_;
@@ -340,7 +354,7 @@ class Worker : public kt::RPCServer::Worker {
                   const char* cmdpath, ScriptProcessor* scrprocs, OpCount* opcounts) :
       thnum_(thnum), condmap_(condmap), dbs_(dbs), dbnum_(dbnum), dbmap_(dbmap),
       omode_(omode), asi_(asi), ash_(ash), bgspath_(bgspath), bgsi_(bgsi), bgscomp_(bgscomp),
-      ulog_(ulog), ulogdbs_(ulogdbs), cmdpath_(cmdpath), scrprocs_(scrprocs),
+      ulog_(ulog), cmdpath_(cmdpath), scrprocs_(scrprocs),
       opcounts_(opcounts), idlecnt_(0), asnext_(0), bgsnext_(0), slave_(NULL) {
     asnext_ = kc::time() + asi_;
     bgsnext_ = kc::time() + bgsi_;
@@ -2684,7 +2698,6 @@ class Worker : public kt::RPCServer::Worker {
   const double bgsi_;
   kc::Compressor* const bgscomp_;
   kt::UpdateLogger* const ulog_;
-  DBUpdateLogger* const ulogdbs_;
   const char* const cmdpath_;
   ScriptProcessor* const scrprocs_;
   OpCount* const opcounts_;
@@ -2716,7 +2729,10 @@ static void usage() {
   eprintf("%s: Kyoto Tycoon: a handy cache/storage server\n", g_progname);
   eprintf("\n");
   eprintf("usage:\n");
-  eprintf("  %s [-host str] [-port num] [-tout num] [-th num] [-log file] [-li|-ls|-le|-lz]"
+  eprintf("  %s [-host str] [-port num] [-auxhost str] [-auxport num]"
+          " [-sec] [-msec] [-capath file]"
+          " [-pk file] [-cert file] [-rpk file] [-rcert file] [-tout num]"
+          " [-th num] [-log file] [-li|-ls|-le|-lz]"
           " [-ulog dir] [-ulim num] [-uasi num] [-sid num] [-ord] [-oat|-oas|-onl|-otl|-onr]"
           " [-asi num] [-ash] [-bgs dir] [-bgsi num] [-bgc str]"
           " [-dmn] [-pid file] [-cmd dir] [-scr file]"
@@ -2729,6 +2745,12 @@ static void usage() {
 
 // kill the running server
 static void killserver(int signum) {
+  if (g_serv_aux) {
+    g_serv_aux->stop();
+    g_serv_aux = NULL;
+    if (g_daemon && signum == SIGHUP) g_restart = true;
+    if (signum == SIGUSR1) g_restart = true;
+  }
   if (g_serv) {
     g_serv->stop();
     g_serv = NULL;
@@ -2743,7 +2765,9 @@ static int32_t run(int argc, char** argv) {
   bool argbrk = false;
   std::vector<std::string> dbpaths;
   const char* host = NULL;
+  const char* auxhost = NULL;
   int32_t port = kt::DEFPORT;
+  int32_t auxport = kt::UNDEFPORT;
   double tout = DEFTOUT;
   int32_t thnum = DEFTHNUM;
   const char* logpath = NULL;
@@ -2764,6 +2788,13 @@ static int32_t run(int argc, char** argv) {
   const char* scrpath = NULL;
   const char* mhost = NULL;
   int32_t mport = kt::DEFPORT;
+  bool secure = false;
+  bool msecure = false;
+  const char* capath = NULL;
+  const char* pkpath = NULL;
+  const char* certpath = NULL;
+  const char* rpkpath = NULL;
+  const char* rcertpath = NULL;
   const char* rtspath = NULL;
   double riv = DEFRIV;
   const char* plsvpath = NULL;
@@ -2776,9 +2807,34 @@ static int32_t run(int argc, char** argv) {
       } else if (!std::strcmp(argv[i], "-host")) {
         if (++i >= argc) usage();
         host = argv[i];
+      } else if (!std::strcmp(argv[i], "-auxhost")) {
+        if (++i >= argc) usage();
+        auxhost = argv[i];
       } else if (!std::strcmp(argv[i], "-port")) {
         if (++i >= argc) usage();
         port = kc::atoix(argv[i]);
+      } else if (!std::strcmp(argv[i], "-auxport")) {
+        if (++i >= argc) usage();
+        auxport = kc::atoix(argv[i]);
+      } else if (!std::strcmp(argv[i], "-sec")) {
+        secure = true;
+      } else if (!std::strcmp(argv[i], "-ca")) {
+        if (++i >= argc) usage();
+        capath = argv[i];
+      } else if (!std::strcmp(argv[i], "-pk")) {
+        if (++i >= argc) usage();
+        pkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-cert")) {
+        if (++i >= argc) usage();
+        certpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-msec")) {
+        msecure = true;
+      } else if (!std::strcmp(argv[i], "-rpk")) {
+        if (++i >= argc) usage();
+        rpkpath = argv[i];
+      } else if (!std::strcmp(argv[i], "-rcert")) {
+        if (++i >= argc) usage();
+        rcertpath = argv[i];
       } else if (!std::strcmp(argv[i], "-tout")) {
         if (++i >= argc) usage();
         tout = kc::atof(argv[i]);
@@ -2888,8 +2944,10 @@ static int32_t run(int argc, char** argv) {
     if (pldbpath) usage();
     dbpaths.push_back(":");
   }
-  int32_t rv = proc(dbpaths, host, port, tout, thnum, logpath, logkinds,
-                    ulogpath, ulim, uasi, sid, omode, asi, ash, bgspath, bgsi, bgscomp,
+  int32_t rv = proc(dbpaths, host, port, auxhost, auxport,
+                    secure, msecure, capath, rpkpath, rcertpath, pkpath, certpath,
+                    tout, thnum, logpath, logkinds, ulogpath, ulim, uasi,
+                    sid, omode, asi, ash, bgspath, bgsi, bgscomp,
                     dmn, pidpath, cmdpath, scrpath, mhost, mport, rtspath, riv,
                     plsvpath, plsvex, pldbpath);
   delete bgscomp;
@@ -2899,7 +2957,13 @@ static int32_t run(int argc, char** argv) {
 
 // drive the server process
 static int32_t proc(const std::vector<std::string>& dbpaths,
-                    const char* host, int32_t port, double tout, int32_t thnum,
+                    const char* host, int32_t port,
+                    const char* auxhost, int32_t auxport,
+                    bool secure, bool msecure,
+                    const char* capath,
+                    const char* rpkpath, const char* rcertpath,
+                    const char* pkpath, const char* certpath,
+                    double tout, int32_t thnum,
                     const char* logpath, uint32_t logkinds,
                     const char* ulogpath, int64_t ulim, double uasi,
                     int32_t sid, int32_t omode, double asi, bool ash,
@@ -2958,6 +3022,52 @@ static int32_t proc(const std::vector<std::string>& dbpaths,
     eprintf("%s: update log requires the server ID\n", g_progname);
     return 1;
   }
+  if (secure) {
+    if (!capath) {
+      eprintf("%s: secure server requires ceritificate authority [-ca path]\n", g_progname);
+      return 1;
+    } else if (!kc::File::status(capath)) {
+      eprintf("%s: %s: no such file\n", g_progname, capath);
+      return 1;
+    }
+    if (!pkpath) {
+      eprintf("%s: secure server requires private key [-pk path]\n", g_progname);
+      return 1;
+    } else if (!kc::File::status(pkpath)) {
+      eprintf("%s: %s: no such file\n", g_progname, pkpath);
+      return 1;
+    }
+    if (!certpath) {
+      eprintf("%s: secure server requires certificate [-cert path]\n", g_progname);
+      return 1;
+    } else if (!kc::File::status(certpath)) {
+      eprintf("%s: %s: no such file\n", g_progname, certpath);
+      return 1;
+    }
+  }
+  if (mhost && msecure) {
+    if (!capath) {
+      eprintf("%s: secure server requires ceritificate authority [-ca path]\n", g_progname);
+      return 1;
+    } else if (!kc::File::status(capath)) {
+      eprintf("%s: %s: no such file\n", g_progname, capath);
+      return 1;
+    }
+    if (!rpkpath) {
+      eprintf("%s: secure replication requires replication private key [-rpk path]\n", g_progname);
+      return 1;
+    } else if (!kc::File::status(rpkpath)) {
+      eprintf("%s: %s: no such file\n", g_progname, rpkpath);
+      return 1;
+    }
+    if (!rcertpath) {
+      eprintf("%s: secure replication requires replication certificate [-rcert path]\n", g_progname);
+      return 1;
+    } else if (!kc::File::status(rcertpath)) {
+      eprintf("%s: %s: no such file\n", g_progname, rcertpath);
+      return 1;
+    }
+  }
   if (!cmdpath) cmdpath = kc::File::CDIRSTR;
   if (mhost) {
     if (sid < 0) {
@@ -2988,6 +3098,7 @@ static int32_t proc(const std::vector<std::string>& dbpaths,
     return 1;
   }
   kt::RPCServer serv;
+  kt::RPCServer serv_aux;
   Logger logger;
   if (!logger.open(logpath)) {
     eprintf("%s: %s: could not open the log file\n", g_progname, logpath ? logpath : "-");
@@ -2996,11 +3107,21 @@ static int32_t proc(const std::vector<std::string>& dbpaths,
   serv.set_logger(&logger, logkinds);
   serv.log(Logger::SYSTEM, "================ [START]: pid=%d", g_procid);
   std::string addr = "";
+  std::string addr_aux = "";
   if (host) {
     addr = kt::Socket::get_host_address(host);
     if (addr.empty()) {
       serv.log(Logger::ERROR, "unknown host: %s", host);
       return 1;
+    }
+  }
+  if (auxport != kt::UNDEFPORT) {
+    if (auxhost != NULL) {
+      addr_aux = kt::Socket::get_host_address(auxhost);
+    }
+    if (addr_aux.empty()) {
+      serv.log(Logger::SYSTEM, "invalid or missing auxhost, defaulting to: %s", host);
+      addr_aux = addr;
     }
   }
   kt::SharedLibrary pldblib;
@@ -3019,7 +3140,7 @@ static int32_t proc(const std::vector<std::string>& dbpaths,
     }
   }
   std::string expr = kc::strprintf("%s:%d", addr.c_str(), port);
-  serv.set_network(expr, tout);
+  serv.set_network(expr, tout, secure, capath, pkpath, certpath);
   int32_t dbnum = dbpaths.size();
   kt::UpdateLogger* ulog = NULL;
   DBUpdateLogger* ulogdbs = NULL;
@@ -3142,6 +3263,14 @@ static int32_t proc(const std::vector<std::string>& dbpaths,
   Worker worker(thnum, &condmap, dbs, dbnum, dbmap, omode, asi, ash, bgspath, bgsi, bgscomp,
                 ulog, ulogdbs, cmdpath, scrprocs, opcounts);
   serv.set_worker(&worker, thnum);
+  Worker worker_aux(thnum, &condmap, dbs, dbnum, dbmap, omode, asi, ash, bgspath, bgsi, bgscomp,
+                    ulog, ulogdbs, cmdpath, scrprocs, opcounts);
+  if (auxport != kt::UNDEFPORT) {
+    std::string expr_aux = kc::strprintf("%s:%d", addr_aux.c_str(), auxport);
+    serv_aux.set_network(expr_aux, tout);
+    serv_aux.set_logger(&logger, logkinds);
+    serv_aux.set_worker(&worker_aux, thnum);
+  }
   if (pidpath) {
     char numbuf[kc::NUMBUFSIZ];
     size_t nsiz = std::sprintf(numbuf, "%d\n", g_procid);
@@ -3151,16 +3280,28 @@ static int32_t proc(const std::vector<std::string>& dbpaths,
   while (true) {
     g_restart = false;
     g_serv = &serv;
-    Slave slave(sid, rtspath, mhost, mport, riv, &serv, dbs, dbnum, ulog, ulogdbs);
+    Slave slave(sid, rtspath, riv, &serv, dbs, dbnum, ulog, ulogdbs, mhost, mport, msecure, capath, rpkpath, rcertpath );
     slave.start();
     worker.set_misc_conf(&slave);
+    Slave slave_aux(sid, rtspath, riv, &serv_aux, dbs, dbnum, ulog, ulogdbs);
+    if (auxport != kt::UNDEFPORT) {
+      g_serv_aux = &serv_aux;
+      slave_aux.start();
+      worker_aux.set_misc_conf(&slave_aux);
+      serv_aux.start(true);
+    }
     PlugInDriver pldriver(plsv);
     if (plsv) pldriver.start();
-    if (serv.start()) {
+    if (serv.start(false)) {
       condmap.broadcast_all();
       if (!serv.finish()) err = true;
     } else {
       err = true;
+    }
+    if (auxport != kt::UNDEFPORT) {
+      if (!serv_aux.finish()) {
+        err = true;
+      }
     }
     kc::Thread::sleep(0.5);
     if (plsv) {
@@ -3171,6 +3312,10 @@ static int32_t proc(const std::vector<std::string>& dbpaths,
     }
     slave.stop();
     slave.join();
+    if (auxport != kt::UNDEFPORT) {
+      slave_aux.stop();
+      slave_aux.join();
+    }
     if (!g_restart || err) break;
     logger.close();
     if (!logger.open(logpath)) {

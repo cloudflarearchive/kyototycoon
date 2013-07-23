@@ -71,12 +71,17 @@ class RPCClient {
    * @param port the port numger of the server.
    * @param timeout the timeout of each operation in seconds.  If it is not more than 0, no
    * timeout is specified.
+   * @param bool secure if this is to be a secure socket
+   * @param char* ca path of the ca
+   * @param char* pk path of the private key
+   * @param char* cert path of the certificate
    * @return true on success, or false on failure.
    */
-  bool open(const std::string& host = "", int32_t port = DEFPORT, double timeout = -1) {
+  bool open(const std::string& host = "", int32_t port = DEFPORT, double timeout = -1,
+            bool secure = false, const char* ca = NULL, const char* pk = NULL, const char* cert = NULL) {
     _assert_(true);
     if (open_ || port < 1) return false;
-    if (!ua_.open(host, port, timeout)) return false;
+    if (!ua_.open(host, port, timeout, secure, ca, pk, cert)) return false;
     host_ = host;
     port_ = port;
     timeout_ = timeout;
@@ -433,10 +438,15 @@ class RPCServer {
    * @param expr an expression of the address and the port of the server.
    * @param timeout the timeout of each network operation in seconds.  If it is not more than 0,
    * no timeout is specified.
+   * @param bool secure if this is to be a secure socket
+   * @param char* ca path of the ca
+   * @param char* pk path of the private key
+   * @param char* cert path of the certificate
    */
-  void set_network(const std::string& expr, double timeout = -1) {
+  void set_network(const std::string& expr, double timeout = -1, bool secure = false,
+                   const char* ca = NULL, const char* pk = NULL, const char* cert = NULL) {
     _assert_(true);
-    serv_.set_network(expr, timeout);
+    serv_.set_network(expr, timeout, "", secure, ca, pk, cert);
   }
   /**
    * Set the logger to process each log message.
@@ -465,9 +475,9 @@ class RPCServer {
    * @return true on success, or false on failure.
    * @note This function blocks until the server stops by the RPCServer::stop method.
    */
-  bool start() {
+  bool start(bool threaded = false) {
     _assert_(true);
-    return serv_.start();
+    return serv_.start(threaded);
   }
   /**
    * Stop the service.
