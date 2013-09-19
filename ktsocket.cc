@@ -26,7 +26,6 @@ extern "C" {
 
 namespace kyototycoon {                  // common namespace
 
-
 /**
  * Constants for implementation.
  */
@@ -749,7 +748,7 @@ bool ServerSocket::open(const std::string& expr) {
     ::close(fd);
     return false;
   }
-  if (::listen(fd, SOMAXCONN) != 0) {
+  if (::listen(fd, BACKLOG) != 0) {
     servseterrmsg(core, "listen failed");
     ::close(fd);
     return -1;
