@@ -37,7 +37,6 @@ namespace kt = kyototycoon;
 // constants
 const int32_t OPENDBMAX = 200;           // maximum number of open databases
 const int32_t THREADMAX = 128;           // maximum number of threads
-const int32_t BACKLOG = 512;             // backlog param for listen
 const size_t RECBUFSIZ = 64;             // buffer size for a record
 const size_t RECBUFSIZL = 1024;          // buffer size for a long record
 const size_t LINEBUFSIZ = 8192;          // buffer size for a line

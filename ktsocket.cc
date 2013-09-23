@@ -30,6 +30,7 @@ namespace kyototycoon {                  // common namespace
  * Constants for implementation.
  */
 namespace {
+const int32_t BACKLOG = 1024;            ///< backlog param for listen
 const int32_t NAMEBUFSIZ = 256;          ///< size of the name buffer
 const int32_t IOBUFSIZ = 4096;           ///< size of the IO buffer
 const double WAITTIME = 0.1;             ///< interval to check timeout
