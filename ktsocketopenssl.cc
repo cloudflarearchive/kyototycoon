@@ -440,7 +440,12 @@ static void seterrmsg(SecChannelOpenSSL *core, int rc) {
     core->error = SecChannel::SEWantWrite;
     core->errmsg = "SSL channel needs to be read";
     break;
+  case SSL_ERROR_ZERO_RETURN:
+    core->error = SecChannel::SEInternal;
+    core->errmsg = "SSL channel has been shut down from the other side";
+    break;
   case SSL_ERROR_SSL:
+  case SSL_ERROR_SYSCALL:
     core->error = SecChannel::SEInternal;
     core->errmsg = ERR_reason_error_string(ERR_get_error());
     break;
