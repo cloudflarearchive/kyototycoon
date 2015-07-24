@@ -2336,7 +2336,8 @@ class ReplicationClient {
    * @return true on success, or false on failure.
    */
   bool open(const std::string& host = "", int32_t port = DEFPORT, double timeout = -1,
-            uint64_t ts = 0, uint16_t sid = 0, uint32_t opts = 0) {
+            uint64_t ts = 0, uint16_t sid = 0, uint32_t opts = 0, bool secure = false,
+            const char* ca = NULL, const char* pk = NULL, const char* cert = NULL) {
     _assert_(true);
     const std::string& thost = host.empty() ? Socket::get_local_host_name() : host;
     const std::string& addr = Socket::get_host_address(thost);
@@ -2344,7 +2345,7 @@ class ReplicationClient {
     std::string expr;
     kc::strprintf(&expr, "%s:%d", addr.c_str(), port);
     if (timeout > 0) sock_.set_timeout(timeout);
-    if (!sock_.open(expr)) return false;
+    if (!sock_.open(expr, secure, ca, pk, cert)) return false;
     uint32_t flags = 0;
     if (opts & WHITESID) flags |= WHITESID;
     char tbuf[1+sizeof(flags)+sizeof(ts)+sizeof(sid)];
