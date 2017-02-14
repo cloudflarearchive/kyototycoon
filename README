@@ -1,7 +1,7 @@
 ================================================================
  Kyoto Tycoon: a handy cache/storage server
  Copyright (C) 2009-2010 FAL Labs
- Copyright (C) 2013-2014 CloudFlare
+ Copyright (C) 2013-2014 Cloudflare
 ================================================================
 
 
@@ -28,7 +28,7 @@ License version 3.  See the file `COPYING' for details.
 
 Kyoto Tycoon was written by FAL Labs.  You can contact the author
 by e-mail to `info@fallabs.com'.  This fork is maintained by
-CloudFlare (github.com/cloudflare).
+Cloudflare (github.com/cloudflare).
 
 
 Thanks.
