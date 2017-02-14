@@ -1,6 +1,6 @@
 /*************************************************************************************************
  * Interface for secure connections for Kyoto Tycoon
- *                                                               Copyright (C) 2013 CloudFlare Inc.
+ *                                                               Copyright (C) 2013 Cloudflare Inc.
  * This file is part of Kyoto Tycoon.
  * This program is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either version
